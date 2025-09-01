@@ -1,0 +1,248 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+{% load static %}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            
+
+
+            <div class="position-relative mx-n4 mt-n4">
+                <div class="profile-wid-bg profile-setting-img">
+                    <img src="{% static 'assets/images/profile-bg.jpg' %}" class="profile-wid-img" alt="">
+                </div>
+            </div>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row">
+                    <!-- Sidebar -->
+                    <div class="col-xxl-3">
+                        <div class="card mt-n5">
+                            <div class="card-body p-4">
+                                <div class="text-center">
+                                    <div class="profile-user position-relative d-inline-block mx-auto mb-4">
+                                        <!-- Profile Picture Preview -->
+                                        <img id="profilePreview" 
+                                             src="{% if profile.profile_image %}{{ profile.profile_image.url }}{% else %}{% static 'assets/images/users/avatar-1.jpg' %}{% endif %}" 
+                                             class="rounded-circle avatar-xl img-thumbnail user-profile-image" 
+                                             alt="user-profile-image">
+
+                                        <div class="avatar-xs p-0 rounded-circle profile-photo-edit">
+                                            <!-- Hide the default input, use label -->
+                                            <input type="file" id="id_profile_image" name="profile_image" accept="image/*" class="d-none">
+                                            <label for="id_profile_image" class="profile-photo-edit avatar-xs">
+                                                <span class="avatar-title rounded-circle bg-light text-body">
+                                                    <i class="ri-camera-fill"></i>
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <h5 class="fs-16 mb-1">{{ profile.user.get_full_name }}</h5>
+                                    <p class="text-muted mb-0">{{ profile.department }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress -->
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="flex-grow-1">
+                                        <h5 class="card-title mb-0">Complete Your Profile</h5>
+                                    </div>
+                                </div>
+                                <div class="progress animated-progress custom-progress progress-label">
+                                    <div id="progressBar" class="progress-bar bg-danger" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                        <div class="label">0%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Content -->
+                    <div class="col-xxl-9">
+                        <div class="card mt-xxl-n5">
+                            <div class="card-header">
+                                <ul class="nav nav-tabs-custom rounded card-header-tabs border-bottom-0" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" data-bs-toggle="tab" href="#personalDetails" role="tab">
+                                            <i class="fas fa-home"></i> Personal Details
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="tab-content">
+                                    <div class="tab-pane active" id="personalDetails" role="tabpanel">
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">First Name</label>
+                                                    <input type="text" class="form-control" value="{{ profile.user.first_name }}" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Last Name</label>
+                                                    <input type="text" class="form-control" value="{{ profile.user.last_name }}" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Email Address</label>
+                                                    <input type="email" class="form-control" value="{{ profile.user.email }}" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <div class="mb-3">
+                                                    <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number</label>
+                                                    {{ form.phone_number }}
+                                                    {% if form.phone_number.errors %}
+                                                    <div class="text-danger">
+                                                        {% for error in form.phone_number.errors %}
+                                                        <small>{{ error }}</small>
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-12">
+                                                <div class="mb-3">
+                                                    <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
+                                                    {{ form.address }}
+                                                    {% if form.address.errors %}
+                                                    <div class="text-danger">
+                                                        {% for error in form.address.errors %}
+                                                        <small>{{ error }}</small>
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-12">
+                                                <div class="mb-3">
+                                                    <label for="{{ form.department.id_for_label }}" class="form-label">Department</label>
+                                                    {{ form.department }}
+                                                    {% if form.department.errors %}
+                                                    <div class="text-danger">
+                                                        {% for error in form.department.errors %}
+                                                        <small>{{ error }}</small>
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-12">
+                                                <div class="mb-3 pb-2">
+                                                    <label for="{{ form.bio.id_for_label }}" class="form-label">Bio</label>
+                                                    {{ form.bio }}
+                                                    {% if form.bio.errors %}
+                                                    <div class="text-danger">
+                                                        {% for error in form.bio.errors %}
+                                                        <small>{{ error }}</small>
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-12">
+                                                <div class="hstack gap-2 justify-content-end">
+                                                    <button type="submit" class="btn btn-primary">Update</button>
+                                                    <a href="{% url 'profile' %}" class="btn btn-soft-success">Cancel</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div><!-- end tab-pane -->
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- end col -->
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- JS -->
+<script>
+    // ✅ Preview profile image
+    const profileInput = document.getElementById("id_profile_image");
+    const profilePreview = document.getElementById("profilePreview");
+
+    if (profileInput) {
+        profileInput.addEventListener("change", function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    profilePreview.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+                
+                // Update progress when image is selected
+                updateProgress();
+            }
+        });
+    }
+
+    // ✅ Progress bar update based on filled fields
+    function updateProgress() {
+        // Track all editable fields
+        const phoneField = document.getElementById("id_phone_number");
+        const addressField = document.getElementById("id_address");
+        const departmentField = document.getElementById("id_department");
+        const bioField = document.getElementById("id_bio");
+        const profileImageField = document.getElementById("id_profile_image");
+        
+        let filled = 0;
+        const totalFields = 5; // phone, address, department, bio, profile image
+        
+        if (phoneField && phoneField.value.trim() !== "") filled++;
+        if (addressField && addressField.value.trim() !== "") filled++;
+        if (departmentField && departmentField.value.trim() !== "") filled++;
+        if (bioField && bioField.value.trim() !== "") filled++;
+        
+        // Check if profile image exists (either already had one or selected a new one)
+        const hasProfileImage = "{{ profile.profile_image }}" !== "" || 
+                               (profileImageField && profileImageField.files.length > 0);
+        if (hasProfileImage) filled++;
+        
+        const percent = Math.round((filled / totalFields) * 100);
+        const progressBar = document.getElementById("progressBar");
+        
+        // Update progress bar color based on percentage
+        let progressColor = "bg-danger";
+        if (percent >= 50) progressColor = "bg-warning";
+        if (percent >= 80) progressColor = "bg-success";
+        
+        if (progressBar) {
+            progressBar.style.width = percent + "%";
+            progressBar.setAttribute("aria-valuenow", percent);
+            progressBar.querySelector(".label").textContent = percent + "%";
+            progressBar.className = "progress-bar " + progressColor;
+        }
+    }
+
+    // Trigger on load and input
+    document.addEventListener("DOMContentLoaded", function() {
+        // Add event listeners to all form fields
+        const phoneField = document.getElementById("id_phone_number");
+        const addressField = document.getElementById("id_address");
+        const departmentField = document.getElementById("id_department");
+        const bioField = document.getElementById("id_bio");
+        
+        if (phoneField) phoneField.addEventListener("input", updateProgress);
+        if (addressField) addressField.addEventListener("input", updateProgress);
+        if (departmentField) departmentField.addEventListener("change", updateProgress);
+        if (bioField) bioField.addEventListener("input", updateProgress);
+        
+        // Initial update
+        updateProgress();
+    });
+</script>
+
+{% endblock content %}

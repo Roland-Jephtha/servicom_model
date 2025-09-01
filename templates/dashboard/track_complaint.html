@@ -1,0 +1,177 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+
+{% block content%}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+
+            <!-- Complaint Details Header -->
+            <div class="row mb-3 pb-1">
+                <div class="col-12">
+                    <div class="d-flex align-items-center flex-column flex-md-row">
+                        <div class="flex-grow-1">
+                            <h4 class="fs-16 mb-1">Complaint Details</h4>
+                            <p class="text-muted mb-0">Track the status of your complaint</p>
+                        </div>
+                        <div class="mt-3 mt-md-0">
+                            <a href="{% url 'dashboard' %}" class="btn btn-soft-primary">
+                                <i class="ri-arrow-left-line align-middle me-1"></i> Back to Dashboard
+                            </a>
+
+                            {% if complaint.status == 'resolved' and not feedback_given %}
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#feedbackModal">
+                                <i class="ri-star-line align-middle me-1"></i> Submit Feedback
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Complaint Details Table -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <table class="table table-centered table-nowrap mb-0">
+                                <tbody>
+                                    <tr>
+                                        <th style="width: 20%;">Reference Number</th>
+                                        <td>{{ complaint.reference }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Complaint Type</th>
+                                        <td>{{ complaint.type }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Department</th>
+                                        <td>{{ complaint.department }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Status</th>
+                                        <td>
+                                            <span class="badge {% if complaint.status == 'resolved' %}bg-success
+                                                {% elif complaint.status == 'in_progress' %}bg-warning
+                                                {% elif complaint.status == 'pending' %}bg-danger
+                                                {% else %}bg-secondary{% endif %}">
+                                                {{ complaint.status|title }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Date Submitted</th>
+                                        <td>{{ complaint.created_at|date:"d M, Y" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Description</th>
+                                        <td>{{ complaint.description }}</td>
+                                    </tr>
+                                    {% if complaint.file %}
+                                    <tr>
+                                        <th>Attached File</th>
+                                        <td>
+                                            <a href="{{ complaint.file.url }}" class="btn btn-sm btn-light" target="_blank">
+                                                <i class="ri-file-download-line"></i> Download File
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Display feedback if already given -->
+            {% if complaint.status == 'resolved' and feedback_given %}
+            <div class="row mt-4">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title mb-4">Your Feedback</h5>
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="text-muted me-2">Rating:</span>
+                                <div class="text-warning">
+                                    {% for i in "123456" %}
+                                        {% if i <= complaint.feedback.rating|stringformat:"s" %}
+                                            <i class="ri-star-fill"></i>
+                                        {% else %}
+                                            <i class="ri-star-line"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <p class="mb-0">{{ complaint.feedback.comment }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<!-- Feedback Modal -->
+<div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="post">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="feedbackModalLabel">Submit Feedback</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">Rating</label>
+                    <div class="mb-3" id="starRating">
+                        {% for i in "123456" %}
+                        <i class="ri-star-line fs-3 star" data-value="{{ i }}"></i>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="rating" id="ratingInput" value="0">
+                    <div class="mb-3">
+                        <label for="feedbackComment" class="form-label">Comment</label>
+                        <textarea class="form-control" id="feedbackComment" name="comment" rows="4" placeholder="Write your feedback...">{{ form.comment.value }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Star rating JS -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const stars = document.querySelectorAll('#starRating .star');
+    const ratingInput = document.getElementById('ratingInput');
+
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            const value = star.dataset.value;
+            ratingInput.value = value;
+
+            stars.forEach(s => {
+                if(s.dataset.value <= value){
+                    s.classList.remove('ri-star-line');
+                    s.classList.add('ri-star-fill');
+                } else {
+                    s.classList.remove('ri-star-fill');
+                    s.classList.add('ri-star-line');
+                }
+            });
+        });
+    });
+});
+</script>
+
+
+{% endblock content %}

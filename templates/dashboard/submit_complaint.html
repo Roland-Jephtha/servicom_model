@@ -1,0 +1,192 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+
+            <!-- start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Submit Complaint</h4>
+
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Forms</a></li>
+                                <li class="breadcrumb-item active">Submit Complaint</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end page title -->
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header align-items-center d-flex">
+                            <h4 class="card-title mb-0 flex-grow-1">Complaint Details</h4>
+                        </div><!-- end card header -->
+
+                        <div class="card-body">
+                            <form method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class="live-preview">
+                                    <div class="row gy-4">
+
+                                        <!-- Complaint Type Field -->
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="{{ form.type.id_for_label }}" class="form-label">
+                                                    <i class="ri-alert-line me-1"></i> Complaint Type
+                                                </label>
+                                                <div class="form-icon">
+                                                    {{ form.type }}
+                                                    <!-- <i class="ri-arrow-down-s-line"></i> -->
+                                                </div>
+                                                {% if form.type.errors %}
+                                                    <div class="text-danger mt-1">
+                                                        {{ form.type.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <!--end col-->
+
+                                        <!-- Department Field -->
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="{{ form.department.id_for_label }}" class="form-label">
+                                                    <i class="ri-chat-4-line me-1"></i> Department
+                                                </label>
+                                                <div class="form-icon">
+                                                    {{ form.department }}
+                                                    <!-- <i class="ri-chat-4-line"></i> -->
+                                                </div>
+                                                {% if form.department.errors %}
+                                                    <div class="text-danger mt-1">
+                                                        {{ form.department.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <!--end col-->
+
+                                        <!-- Attachment Field (Dropzone) -->
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <label for="{{ form.file.id_for_label }}" class="form-label">
+                                                    <i class="ri-attachment-line me-1"></i> Attachment
+                                                </label>
+                                                <div id="dropzone" class="dropzone">
+
+                                                    <h1><i class="ri-attachment-line me-1"></i></h3>
+                                                    <p>Drag & Drop file here or click to upload</p>
+                                                    {{ form.file }}
+                                                </div>
+                                                {% if form.file.errors %}
+                                                    <div class="text-danger mt-1">
+                                                        {{ form.file.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <!--end col-->
+
+                                        <!-- Description Field -->
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <label for="{{ form.description.id_for_label }}" class="form-label">
+                                                    <i class="ri-file-text-line me-1"></i> Description
+                                                </label>
+                                                <div class="form-icon">
+                                                    {{ form.description }}
+                                                    <i class="ri-file-text-line"></i>
+                                                </div>
+                                                {% if form.description.errors %}
+                                                    <div class="text-danger mt-1">
+                                                        {{ form.description.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <!--end col-->
+
+                                        <!-- Submit Button -->
+                                        <div class="col-12">
+                                            <div class="mt-4">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="ri-send-plane-line me-1"></i> Submit Complaint
+                                                </button>
+                                                <a href="" class="btn btn-light ms-2">
+                                                    <i class="ri-refresh-line me-1"></i> Reset
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <!--end col-->
+
+                                    </div><!--end row-->
+                                </div><!--end live-preview-->
+                            </form>
+                        </div><!--end card-body-->
+                    </div><!--end card-->
+                </div><!--end col-lg-12-->
+            </div><!--end row-->
+
+        </div><!--end container-fluid-->
+    </div><!--end page-content-->
+</div><!--end main-content-->
+
+<style>
+    /* Dropzone Styles */
+    .dropzone {
+        border: 2px dashed #86b7fe;
+        border-radius: 0.475rem;
+        padding: 30px;
+        text-align: center;
+        /* background: #f8f9fa; */
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .dropzone:hover {
+        background: #eef6ff;
+    }
+    .dropzone.dragover {
+        background: #dbeafe;
+        border-color: #2563eb;
+    }
+    .dropzone input[type="file"] {
+        display: none; /* Hide the default file input */
+    }
+</style>
+
+<script>
+    // Dropzone Script
+    const dropzone = document.getElementById("dropzone");
+    const fileInput = dropzone.querySelector("input[type='file']");
+
+    dropzone.addEventListener("click", () => fileInput.click());
+
+    dropzone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropzone.classList.add("dragover");
+    });
+
+    dropzone.addEventListener("dragleave", () => {
+        dropzone.classList.remove("dragover");
+    });
+
+    dropzone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("dragover");
+        fileInput.files = e.dataTransfer.files;
+
+        // Show file name in dropzone
+        dropzone.querySelector("p").textContent = fileInput.files[0].name;
+    });
+</script>
+
+{% endblock content %}
