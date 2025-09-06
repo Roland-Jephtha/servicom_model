@@ -1,0 +1,143 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Staff Profile</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);">Servicom</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'staff_dashboard' %}">Staff Dashboard</a></li>
+                                <li class="breadcrumb-item active">Staff Profile</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xl-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="text-center mb-4">
+                                {% if staff_profile.profile_image %}
+                                <img src="{{ staff_profile.profile_image.url }}" alt="{{ staff_profile.user.username }}" class="rounded-circle avatar-xl img-thumbnail mb-3">
+                                {% else %}
+                                <div class="avatar-xl bg-primary-subtle rounded-circle mb-3 d-flex align-items-center justify-content-center">
+                                    <span class="avatar-title bg-primary rounded-circle text-primary fs-4">{{ staff_profile.user.username|first|upper }}</span>
+                                </div>
+                                {% endif %}
+                                <h5 class="mb-1">{{ staff_profile.user.get_full_name|default:staff_profile.user.username }}</h5>
+                                <p class="text-muted mb-0">{{ staff_profile.user.email }}</p>
+                                <span class="badge bg-primary rounded-pill">{{ staff_profile.user.get_role_display }}</span>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'staff_edit_profile' %}" class="btn btn-primary">
+                                    <i class="ri-edit-line align-middle me-1"></i> Edit Profile
+                                </a>
+                                <a href="{% url 'staff_dashboard' %}" class="btn btn-secondary">
+                                    <i class="ri-dashboard-line align-middle me-1"></i> Back to Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-8">
+                    <div class="card">
+                        <div class="card-header align-items-center d-flex">
+                            <h5 class="card-title mb-0 flex-grow-1">Profile Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-nowrap align-middle mb-0">
+                                    <tbody>
+                                        <tr>
+                                            <th scope="row" class="table-light">Username:</th>
+                                            <td>{{ staff_profile.user.username }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row" class="table-light">Full Name:</th>
+                                            <td>{{ staff_profile.user.get_full_name|default:"Not provided" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row" class="table-light">Email:</th>
+                                            <td>{{ staff_profile.user.email }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row" class="table-light">Role:</th>
+                                            <td>{{ staff_profile.user.get_role_display }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row" class="table-light">Department:</th>
+                                            <td>{{ staff_profile.department.name|default:"Not assigned" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row" class="table-light">Phone Number:</th>
+                                            <td>{{ staff_profile.phone_number|default:"Not provided" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row" class="table-light">Address:</th>
+                                            <td>{{ staff_profile.address|default:"Not provided" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th scope="row" class="table-light">Bio:</th>
+                                            <td>{{ staff_profile.bio|default:"Not provided" }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>         
+        
+        
+        
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+              {% if messages %}
+                {% for message in messages %}
+                  {% if message.tags == 'success' %}
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Success!',
+                      text: '{{ message }}',
+                      confirmButtonText: 'OK'
+                    });
+                  {% elif message.tags == 'error' %}
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Oops...',
+                      text: '{{ message }}',
+                      confirmButtonText: 'OK'
+                    });
+                  {% elif message.tags == 'info' %}
+                    Swal.fire({
+                      icon: 'info',
+                      title: 'info...',
+                      text: '{{ message }}',
+                      confirmButtonText: 'OK'
+                    });
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            });
+          </script>
+
+
+{% endblock %}

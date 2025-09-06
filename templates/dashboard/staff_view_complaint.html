@@ -1,0 +1,1177 @@
+{% extends 'dashboard/base.html' %}
+
+{% block extra_css %}
+<style>
+/* Enhanced Timeline styles */
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 20px;
+    width: 3px;
+    background: linear-gradient(180deg, #e3f2fd 0%, #bbdefb 100%);
+    border-radius: 2px;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 60px;
+    margin-bottom: 35px;
+    opacity: 0;
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.timeline-item:nth-child(1) { animation-delay: 0.1s; }
+.timeline-item:nth-child(2) { animation-delay: 0.2s; }
+.timeline-item:nth-child(3) { animation-delay: 0.3s; }
+
+.timeline-point {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2196f3, #1976d2);
+    border: 4px solid #fff;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.timeline-point:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+}
+
+.timeline-point-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.timeline-content {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid rgba(0,0,0,0.05);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.timeline-content:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.timeline-content::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 20px;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid #fff;
+}
+
+/* Enhanced Form styles */
+.form-control, .form-select {
+    border-radius: 10px;
+    border: 2px solid #e3f2fd;
+    padding: 12px 16px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: #fafafa;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #2196f3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    background: #fff;
+    transform: translateY(-1px);
+}
+
+.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 16px 12px;
+    padding-right: 40px;
+}
+
+.input-group-text {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border: 2px solid #e3f2fd;
+    border-right: none;
+    border-radius: 10px 0 0 10px;
+    color: #495057;
+}
+
+.input-group .form-control,
+.input-group .form-select {
+    border-left: none;
+    border-radius: 0 10px 10px 0;
+}
+
+/* Enhanced Card styles */
+.card {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-bottom: 2px solid #e3f2fd;
+    padding: 20px 24px;
+    border-radius: 16px 16px 0 0 !important;
+}
+
+.card-body {
+    padding: 24px;
+}
+
+/* Enhanced Button styles */
+.btn {
+    border-radius: 10px;
+    font-weight: 500;
+    padding: 12px 24px;
+    transition: all 0.3s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2196f3, #1976d2);
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(33, 150, 243, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #4caf50, #388e3c);
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+}
+
+.btn-soft-primary {
+    background: rgba(33, 150, 243, 0.1);
+    color: #1976d2;
+    border: 2px solid rgba(33, 150, 243, 0.2);
+}
+
+.btn-soft-primary:hover {
+    background: rgba(33, 150, 243, 0.15);
+    color: #1565c0;
+    transform: translateY(-1px);
+}
+
+.btn-soft-secondary {
+    background: rgba(108, 117, 125, 0.1);
+    color: #495057;
+    border: 2px solid rgba(108, 117, 125, 0.2);
+}
+
+.btn-soft-secondary:hover {
+    background: rgba(108, 117, 125, 0.15);
+    color: #343a40;
+    transform: translateY(-1px);
+}
+
+.btn-soft-warning {
+    background: rgba(255, 193, 7, 0.1);
+    color: #f57c00;
+    border: 2px solid rgba(255, 193, 7, 0.2);
+}
+
+.btn-soft-warning:hover {
+    background: rgba(255, 193, 7, 0.15);
+    color: #ef6c00;
+    transform: translateY(-1px);
+}
+
+/* Enhanced Status badges */
+.badge {
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-weight: 500;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.bg-warning {
+    background: linear-gradient(135deg, #ff9800, #f57c00) !important;
+}
+
+.bg-info {
+    background: linear-gradient(135deg, #2196f3, #1976d2) !important;
+}
+
+.bg-success {
+    background: linear-gradient(135deg, #4caf50, #388e3c) !important;
+}
+
+.bg-danger {
+    background: linear-gradient(135deg, #f44336, #d32f2f) !important;
+}
+
+/* Enhanced Info display */
+.info-item {
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #f8f9fa, #ffffff);
+    border-radius: 12px;
+    border-left: 4px solid #2196f3;
+    transition: all 0.3s ease;
+}
+
+.info-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Animation keyframes */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(33, 150, 243, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0);
+    }
+}
+
+.animate-pulse {
+    animation: pulse 1.5s infinite;
+}
+
+/* Enhanced scrollbar */
+.form-control::-webkit-scrollbar {
+    width: 8px;
+}
+
+.form-control::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.form-control::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #2196f3, #1976d2);
+    border-radius: 10px;
+}
+
+.form-control::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #1976d2, #1565c0);
+}
+
+/* Status change animation */
+.status-changing {
+    position: relative;
+    overflow: hidden;
+}
+
+.status-changing::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(33, 150, 243, 0.3), transparent);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+/* Loading state */
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.3);
+    border-top-color: rgba(255,255,255,.8);
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .timeline {
+        padding-left: 40px;
+    }
+
+    .timeline-item {
+        padding-left: 50px;
+    }
+
+    .timeline::before {
+        left: 15px;
+    }
+
+    .timeline-point {
+        left: 3px;
+    }
+
+    .card-body {
+        padding: 16px;
+    }
+
+    .info-item {
+        padding: 12px 16px;
+    }
+}
+
+/* Custom select dropdown enhancement */
+.custom-select-wrapper {
+    position: relative;
+}
+
+.custom-select-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #6c757d;
+    pointer-events: none;
+    transition: transform 0.3s ease;
+}
+
+.custom-select-wrapper:hover::after {
+    transform: translateY(-50%) rotate(180deg);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Page Header -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between mb-4">
+                        <div>
+                            <h4 class="mb-1 fw-bold text-dark">Complaint Details</h4>
+                            <p class="text-muted mb-0">Manage and track complaint progress</p>
+                        </div>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0 bg-light px-3 py-2 rounded-pill">
+                                <li class="breadcrumb-item"><a href="javascript: void(0);" class="text-decoration-none">Servicom</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'staff_dashboard' %}" class="text-decoration-none">Staff Dashboard</a></li>
+                                <li class="breadcrumb-item active text-primary">Complaint Details</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Main Content -->
+                <div class="col-lg-8">
+                    <!-- Complaint Information Card -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h5 class="card-title mb-0 d-flex align-items-center">
+                                    <div class="avatar-sm me-3">
+                                        <div class="avatar-title rounded-circle bg-primary bg-opacity-10 text-primary">
+                                            <i class="mdi mdi-information-outline fs-18"></i>
+                                        </div>
+                                    </div>
+                                    Complaint Information
+                                </h5>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Complaint Details -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <div class="info-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted d-flex align-items-center">
+                                                <i class="mdi mdi-pound me-2 text-primary"></i> Reference Number
+                                            </span>
+                                            <span class="fw-bold text-primary">{{ complaint.reference }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted d-flex align-items-center">
+                                                <i class="mdi mdi-domain me-2 text-primary"></i> Department
+                                            </span>
+                                            <span class="fw-medium">{{ complaint.department.name }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted d-flex align-items-center">
+                                                <i class="mdi mdi-tag me-2 text-primary"></i> Type
+                                            </span>
+                                            <span class="fw-medium">{{ complaint.get_type_display }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted d-flex align-items-center">
+                                                <i class="mdi mdi-flag me-2 text-primary"></i> Status
+                                            </span>
+                                            <span class="badge {% if complaint.status == 'pending' %}bg-warning{% elif complaint.status == 'in_progress' %}bg-info{% elif complaint.status == 'resolved' %}bg-success{% else %}bg-danger{% endif %} rounded-pill">
+                                                <i class="mdi {% if complaint.status == 'pending' %}mdi-clock-outline{% elif complaint.status == 'in_progress' %}mdi-progress-check{% elif complaint.status == 'resolved' %}mdi-check-circle{% else %}mdi-close-circle{% endif %} me-1"></i>
+                                                {{ complaint.get_status_display }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="info-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="text-muted d-flex align-items-center">
+                                                <i class="mdi mdi-calendar me-2 text-primary"></i> Date Submitted
+                                            </span>
+                                            <span class="fw-medium">{{ complaint.created_at|date:"d M, Y H:i" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="mb-4">
+                                <h6 class="text-muted mb-3 d-flex align-items-center">
+                                    <i class="mdi mdi-text-long me-2 text-primary"></i> Description
+                                </h6>
+                                <div class="bg-light p-4 rounded-3 border-start border-4 border-primary">
+                                    <p class="mb-0 lh-lg">{{ complaint.description }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Attached File -->
+                            {% if complaint.file %}
+                            <div class="mb-4">
+                                <h6 class="text-muted mb-3 d-flex align-items-center">
+                                    <i class="mdi mdi-paperclip me-2 text-primary"></i> Attached File
+                                </h6>
+                                <div class="d-flex align-items-center p-3 bg-light rounded-3 border">
+                                    <div class="avatar-sm me-3">
+                                        <div class="avatar-title rounded bg-primary bg-opacity-10 text-primary">
+                                            <i class="mdi mdi-file-document"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">Attachment</h6>
+                                        <small class="text-muted">Click to download</small>
+                                    </div>
+                                    <a href="{{ complaint.file.url }}" target="_blank" class="btn btn-soft-primary btn-sm">
+                                        <i class="mdi mdi-download me-1"></i> Download
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Resolution Details -->
+                            {% if complaint.resolved_details %}
+                            <div class="mb-4">
+                                <h6 class="text-muted mb-3 d-flex align-items-center">
+                                    <i class="mdi mdi-check-all me-2 text-success"></i> Resolution Details
+                                </h6>
+                                <div class="bg-success bg-opacity-10 p-4 rounded-3 border border-success border-opacity-25">
+                                    <div class="d-flex">
+                                        <div class="avatar-sm me-3">
+                                            <div class="avatar-title rounded bg-success bg-opacity-10 text-success">
+                                                <i class="mdi mdi-check-circle"></i>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <p class="mb-0 lh-lg">{{ complaint.resolved_details }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Responses Card -->
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h5 class="card-title mb-0 d-flex align-items-center">
+                                    <div class="avatar-sm me-3">
+                                        <div class="avatar-title rounded-circle bg-primary bg-opacity-10 text-primary">
+                                            <i class="mdi mdi-comment-text-outline fs-18"></i>
+                                        </div>
+                                    </div>
+                                    Complaint Responses
+                                    <span class="badge bg-primary ms-3">{{ responses|length }}</span>
+                                </h5>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if responses %}
+                                <div class="timeline">
+                                    {% for response in responses reversed %}
+                                    <div class="timeline-item">
+                                        <div class="timeline-point">
+                                            <div class="timeline-point-icon">
+                                                <i class="mdi mdi-account"></i>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-content">
+                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm me-3">
+                                                        <div class="avatar-title rounded-circle bg-light text-primary">
+                                                            {{ response.responder.get_full_name.0|default:response.responder.username.0|upper }}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0 fw-medium">{{ response.responder.get_full_name|default:response.responder.username }}</h6>
+                                                        <p class="text-muted mb-0 small">{{ response.responder.role|title }}</p>
+                                                    </div>
+                                                </div>
+                                                <small class="text-muted">{{ response.created_at|date:"d M, Y H:i" }}</small>
+                                            </div>
+                                            <div class="bg-light p-3 rounded-3 border-start border-4 border-primary">
+                                                <p class="mb-0 lh-lg">{{ response.comment }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <div class="avatar-lg mx-auto mb-4">
+                                        <div class="avatar-title rounded-circle bg-light text-muted">
+                                            <i class="mdi mdi-comment-text-outline" style="font-size: 48px;"></i>
+                                        </div>
+                                    </div>
+                                    <h5 class="text-muted">No responses yet</h5>
+                                    <p class="text-muted">Responses will appear here once staff members reply</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Update Status Card -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary bg-opacity-10 border-primary d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h5 class="card-title mb-0 d-flex align-items-center text-primary">
+                                    <div class="avatar-sm me-3">
+                                        <div class="avatar-title rounded-circle bg-primary">
+                                            <i class="mdi mdi-pencil-box-outline text-white fs-16"></i>
+                                        </div>
+                                    </div>
+                                    Update Status
+                                </h5>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <form action="{% url 'staff_update_complaint_status' complaint.reference %}" method="post" id="statusForm">
+                                {% csrf_token %}
+
+                                <!-- Status Selection -->
+                                <div class="mb-4">
+                                    <label for="status" class="form-label fw-medium text-dark d-flex align-items-center mb-3">
+                                        <i class="mdi mdi-flag text-primary me-2"></i> Status
+                                    </label>
+
+                                    <div class="custom-select-wrapper">
+                                        <select class="form-select form-select-lg" id="status" name="status" required>
+                                            <option value="">Select Status</option>
+                                            <option value="pending" {% if complaint.status == 'pending' %}selected{% endif %}>
+                                                🕐 Pending
+                                            </option>
+                                            <option value="in_progress" {% if complaint.status == 'in_progress' %}selected{% endif %}>
+                                                🔄 In Progress
+                                            </option>
+                                            <option value="resolved" {% if complaint.status == 'resolved' %}selected{% endif %}>
+                                                ✅ Resolved
+                                            </option>
+                                            <option value="rejected" {% if complaint.status == 'rejected' %}selected{% endif %}>
+                                                ❌ Rejected
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="form-text text-muted mt-2">
+                                        <i class="mdi mdi-information me-1"></i> Select the current status of this complaint
+                                    </div>
+                                </div>
+
+                                <!-- Response -->
+                                <div class="mb-4">
+                                    <label for="response" class="form-label fw-medium text-dark d-flex align-items-center mb-3">
+                                        <i class="mdi mdi-comment-text text-primary me-2"></i> Response
+                                    </label>
+                                    <textarea class="form-control" id="response" name="response" rows="4" 
+                                              placeholder="Enter your response to the complaint..." required 
+                                              maxlength="500"></textarea>
+                                    <div class="form-text text-muted mt-2">
+                                        <i class="mdi mdi-information me-1"></i> This response will be added to the complaint's history
+                                    </div>
+                                </div>
+
+                                <!-- Resolution Details -->
+                                <div class="mb-4" id="resolved-details" style="display: none;">
+                                    <label for="resolved_details" class="form-label fw-medium text-dark d-flex align-items-center mb-3">
+                                        <i class="mdi mdi-check-all text-success me-2"></i> Resolution Details
+                                    </label>
+                                    <textarea class="form-control" id="resolved_details" name="resolved_details" rows="4" 
+                                              placeholder="Enter how the issue was resolved..." maxlength="500"></textarea>
+                                    <div class="form-text text-muted mt-2">
+                                        <i class="mdi mdi-information me-1"></i> Provide details about the resolution process and outcome
+                                    </div>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                        <i class="mdi mdi-content-save-edit me-2"></i> Update Status
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions Card -->
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h5 class="card-title mb-0 d-flex align-items-center">
+                                    <div class="avatar-sm me-3">
+                                        <div class="avatar-title rounded-circle bg-primary bg-opacity-10 text-primary">
+                                            <i class="mdi mdi-lightning-bolt fs-18"></i>
+                                        </div>
+                                    </div>
+                                    Quick Actions
+                                </h5>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-3">
+                                <a href="{% url 'staff_view_all_complaints' %}" class="btn btn-soft-primary btn-lg">
+                                    <i class="mdi mdi-eye me-2"></i> View All Complaints
+                                </a>
+                                <a href="{% url 'staff_dashboard' %}" class="btn btn-soft-secondary btn-lg">
+                                    <i class="mdi mdi-view-dashboard me-2"></i> Back to Dashboard
+                                </a>
+                                {% comment %} {% if complaint.status == 'pending' %}
+                                <button type="button" class="btn btn-soft-warning btn-lg" onclick="confirmForward()">
+                                    <i class="mdi mdi-forward me-2"></i> Forward to Supervisor
+                                </button>
+                                {% endif %} {% endcomment %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Toast -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1050">
+    <div id="successToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="mdi mdi-check-circle me-2"></i>
+                Status updated successfully!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Error Toast -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1050">
+    <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="mdi mdi-alert-circle me-2"></i>
+                <span id="errorMessage">An error occurred. Please try again.</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elements
+    const statusSelect = document.getElementById('status');
+    const resolvedDetails = document.getElementById('resolved-details');
+    const responseTextarea = document.getElementById('response');
+    const resolvedDetailsTextarea = document.getElementById('resolved_details');
+    const submitButton = document.getElementById('submitBtn');
+    const form = document.getElementById('statusForm');
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Status change handler with enhanced animations
+    statusSelect.addEventListener('change', function() {
+        const selectedStatus = this.value;
+        
+        // Add loading state to button
+        submitButton.classList.add('animate-pulse');
+        
+        // Update button appearance based on status
+        updateSubmitButton(selectedStatus);
+        
+        // Handle resolved details visibility
+        if (selectedStatus === 'resolved') {
+            showResolvedDetails();
+            responseTextarea.required = true;
+            resolvedDetailsTextarea.required = true;
+        } else {
+            hideResolvedDetails();
+            responseTextarea.required = selectedStatus !== 'pending';
+            resolvedDetailsTextarea.required = false;
+        }
+
+        // Remove animation after delay
+        setTimeout(() => {
+            submitButton.classList.remove('animate-pulse');
+        }, 1500);
+    });
+
+    // Update submit button based on status
+    function updateSubmitButton(status) {
+        const buttonConfigs = {
+            'pending': {
+                text: '<i class="mdi mdi-clock-outline me-2"></i> Mark as Pending',
+                class: 'btn-warning'
+            },
+            'in_progress': {
+                text: '<i class="mdi mdi-progress-check me-2"></i> Mark as In Progress',
+                class: 'btn-info'
+            },
+            'resolved': {
+                text: '<i class="mdi mdi-check-all me-2"></i> Mark as Resolved',
+                class: 'btn-success'
+            },
+            'rejected': {
+                text: '<i class="mdi mdi-close-circle me-2"></i> Mark as Rejected',
+                class: 'btn-danger'
+            }
+        };
+
+        const config = buttonConfigs[status] || {
+            text: '<i class="mdi mdi-content-save-edit me-2"></i> Update Status',
+            class: 'btn-primary'
+        };
+
+        // Remove all status classes
+        submitButton.classList.remove('btn-primary', 'btn-success', 'btn-warning', 'btn-info', 'btn-danger');
+        
+        // Add new class and update text
+        submitButton.classList.add(config.class);
+        submitButton.innerHTML = config.text;
+    }
+
+    // Show resolved details with animation
+    function showResolvedDetails() {
+        resolvedDetails.style.display = 'block';
+        resolvedDetails.style.opacity = '0';
+        resolvedDetails.style.transform = 'translateY(-10px)';
+        
+        setTimeout(() => {
+            resolvedDetails.style.transition = 'all 0.3s ease';
+            resolvedDetails.style.opacity = '1';
+            resolvedDetails.style.transform = 'translateY(0)';
+        }, 50);
+    }
+
+    // Hide resolved details with animation
+    function hideResolvedDetails() {
+        resolvedDetails.style.transition = 'all 0.3s ease';
+        resolvedDetails.style.opacity = '0';
+        resolvedDetails.style.transform = 'translateY(-10px)';
+        
+        setTimeout(() => {
+            resolvedDetails.style.display = 'none';
+            resolvedDetailsTextarea.value = '';
+        }, 300);
+    }
+
+    // Enhanced form validation
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const status = statusSelect.value;
+        const response = responseTextarea.value.trim();
+        const resolvedDetailsValue = resolvedDetailsTextarea.value.trim();
+
+        // Validation
+        if (!status) {
+            showError('Please select a status');
+            statusSelect.focus();
+            return;
+        }
+
+        if (!response) {
+            showError('Please provide a response');
+            responseTextarea.focus();
+            return;
+        }
+
+        if (status === 'resolved' && !resolvedDetailsValue) {
+            showError('Please provide resolution details when marking as resolved');
+            resolvedDetailsTextarea.focus();
+            return;
+        }
+
+        // Show loading state
+        submitButton.classList.add('btn-loading');
+        submitButton.disabled = true;
+
+        // Simulate form submission (replace with actual form submission)
+        setTimeout(() => {
+            // For demo - remove this and use actual form submission
+            this.submit();
+            
+            // Show success message
+            showSuccess('Status updated successfully!');
+            
+            // Reset loading state
+            submitButton.classList.remove('btn-loading');
+            submitButton.disabled = false;
+        }, 1000);
+    });
+
+    // Character counters with enhanced styling
+    function addCharacterCounter(textarea, maxLength = 500) {
+        const container = textarea.parentNode;
+        
+        textarea.addEventListener('input', function() {
+            const currentLength = this.value.length;
+            const remaining = maxLength - currentLength;
+            
+            // Create or update counter
+            let counter = container.querySelector('.char-counter');
+            if (!counter) {
+                counter = document.createElement('div');
+                counter.className = 'char-counter text-muted small mt-2 d-flex align-items-center';
+                container.appendChild(counter);
+            }
+            
+            // Update counter with icon and progress
+            const percentage = (currentLength / maxLength) * 100;
+            const progressColor = percentage > 80 ? 'danger' : percentage > 60 ? 'warning' : 'primary';
+            
+            counter.innerHTML = `
+                <i class="mdi mdi-format-letter-case me-1"></i>
+                <span class="text-${progressColor}">${currentLength}/${maxLength}</span>
+                <div class="progress ms-2 flex-grow-1" style="height: 4px;">
+                    <div class="progress-bar bg-${progressColor}" style="width: ${percentage}%"></div>
+                </div>
+            `;
+            
+            // Add warning classes
+            if (remaining < 50) {
+                this.classList.add('border-warning');
+                this.classList.remove('border-danger');
+            } else if (remaining < 20) {
+                this.classList.add('border-danger');
+                this.classList.remove('border-warning');
+            } else {
+                this.classList.remove('border-warning', 'border-danger');
+            }
+        });
+    }
+
+    // Add character counters
+    addCharacterCounter(responseTextarea);
+    if (resolvedDetailsTextarea) {
+        addCharacterCounter(resolvedDetailsTextarea);
+    }
+
+    // Auto-resize textareas
+    function autoResize(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+
+    responseTextarea.addEventListener('input', () => autoResize(responseTextarea));
+    if (resolvedDetailsTextarea) {
+        resolvedDetailsTextarea.addEventListener('input', () => autoResize(resolvedDetailsTextarea));
+    }
+
+    // Show success toast
+    function showSuccess(message) {
+        const toast = document.getElementById('successToast');
+        const toastBody = toast.querySelector('.toast-body');
+        toastBody.innerHTML = `<i class="mdi mdi-check-circle me-2"></i>${message}`;
+        
+        const bsToast = new bootstrap.Toast(toast, {
+            autohide: true,
+            delay: 3000
+        });
+        bsToast.show();
+    }
+
+    // Show error toast
+    function showError(message) {
+        const toast = document.getElementById('errorToast');
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.textContent = message;
+        
+        const bsToast = new bootstrap.Toast(toast, {
+            autohide: true,
+            delay: 5000
+        });
+        bsToast.show();
+    }
+
+    // Initialize current status
+    if (statusSelect.value) {
+        updateSubmitButton(statusSelect.value);
+        // Only show resolved details if current status is 'resolved'
+        if (statusSelect.value === 'resolved') {
+            showResolvedDetails();
+        }
+    }
+    
+    // Ensure response field is always required
+    responseTextarea.required = true;
+});
+
+// Forward complaint function with enhanced confirmation
+function confirmForward() {
+    // Create custom modal for confirmation
+    const modalHTML = `
+        <div class="modal fade" id="forwardModal" tabindex="-1" aria-labelledby="forwardModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-warning bg-opacity-10 border-bottom-0">
+                        <h5 class="modal-title" id="forwardModalLabel">
+                            <i class="mdi mdi-forward me-2 text-warning"></i>
+                            Forward Complaint
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="text-center mb-4">
+                            <div class="avatar-lg mx-auto mb-3">
+                                <div class="avatar-title rounded-circle bg-warning bg-opacity-10 text-warning">
+                                    <i class="mdi mdi-account-supervisor-circle" style="font-size: 32px;"></i>
+                                </div>
+                            </div>
+                            <h6 class="mb-2">Forward to Supervisor</h6>
+                            <p class="text-muted">Are you sure you want to forward this complaint to your supervisor? This action will notify them immediately.</p>
+                        </div>
+                        <div class="bg-light p-3 rounded-3 mb-3">
+                            <small class="text-muted">
+                                <i class="mdi mdi-information me-1"></i>
+                                <strong>Note:</strong> The supervisor will receive an email notification and the complaint will appear in their priority queue.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top-0 pt-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                            <i class="mdi mdi-close me-1"></i> Cancel
+                        </button>
+                        <button type="button" class="btn btn-warning" onclick="executeForward()">
+                            <i class="mdi mdi-forward me-1"></i> Forward Complaint
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add modal to page if it doesn't exist
+    if (!document.getElementById('forwardModal')) {
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('forwardModal'));
+    modal.show();
+}
+
+// Execute forward action
+function executeForward() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('forwardModal'));
+    const forwardBtn = document.querySelector('#forwardModal .btn-warning');
+    
+    // Show loading state
+    forwardBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Forwarding...';
+    forwardBtn.disabled = true;
+
+    // Simulate forwarding (replace with actual AJAX call)
+    setTimeout(() => {
+        modal.hide();
+        
+        // Show success message
+        const alertHTML = `
+            <div class="alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3 shadow-lg" 
+                 style="z-index: 9999; min-width: 350px;">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-sm me-3">
+                        <div class="avatar-title rounded bg-success">
+                            <i class="mdi mdi-check text-white"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0">Complaint Forwarded!</h6>
+                        <small>Your supervisor has been notified via email.</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', alertHTML);
+        
+        // Auto dismiss after 5 seconds
+        setTimeout(() => {
+            const alert = document.querySelector('.alert');
+            if (alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        }, 5000);
+        
+        // Reset button
+        forwardBtn.innerHTML = '<i class="mdi mdi-forward me-1"></i> Forward Complaint';
+        forwardBtn.disabled = false;
+    }, 2000);
+}
+
+// Smooth scroll for timeline items
+function observeTimelineItems() {
+    const timelineItems = document.querySelectorAll('.timeline-item');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+
+    timelineItems.forEach(item => {
+        observer.observe(item);
+    });
+}
+
+// Initialize timeline observer
+if (document.querySelector('.timeline-item')) {
+    observeTimelineItems();
+}
+
+// Add floating action button for mobile
+if (window.innerWidth <= 768) {
+    const fabHTML = `
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1000;">
+            <div class="btn-group-vertical shadow">
+                <button class="btn btn-primary rounded-pill p-3 mb-2" onclick="document.getElementById('status').focus()">
+                    <i class="mdi mdi-pencil"></i>
+                </button>
+                <button class="btn btn-secondary rounded-pill p-3" onclick="window.history.back()">
+                    <i class="mdi mdi-arrow-left"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', fabHTML);
+}
+</script>
+
+{% endblock %}

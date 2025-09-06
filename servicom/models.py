@@ -11,6 +11,16 @@ class User(AbstractUser):
     ]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='citizen')
     # Add any extra fields if needed
+    email = models.EmailField(unique=True)
+
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+
+
+
+
+
 
 
 

@@ -1,4 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db.models import Avg
+from django.utils import timezone
+from datetime import timedelta
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.views import LoginView, LogoutView
@@ -17,12 +20,26 @@ from .forms import (
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
+from django.contrib.auth import authenticate, login as auth_login, logout
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import EmailMessage
+from django.core.mail import send_mail
+
+from django.contrib.auth import login as auth_login
+from django.utils.text import slugify
+import uuid
+
 User = get_user_model()
 
 
 
 def home(request):
-    return render(request, 'dashboard/home.html')
+    return render(request, 'home/home.html')
 
 
 
@@ -94,6 +111,9 @@ def track_complaint(request, reference):
     })
 
 
+
+
+
 @login_required
 def give_feedback(request, reference):
     profile = get_object_or_404(Profile, user = request.user)
@@ -161,14 +181,7 @@ def dashboard(request):
     # Check if user is authenticated and has role attribute
     if request.user.is_authenticated and hasattr(request.user, 'role') and request.user.role == 'staff':
         # Staff dashboard with complaint management
-        context = {
-            'recent_complaints': recent_complaints,
-            'total_complaints': total_complaints,
-            'pending_complaints': pending_complaints,
-            'in_progress_complaints': in_progress_complaints,
-            'resolved_complaints': resolved_complaints,
-        }
-        return render(request, 'admin/dashboard.html', context)
+        return redirect('staff_dashboard')
     
     
     elif request.user.is_authenticated:
@@ -287,5 +300,483 @@ def feedback_list(request):
     }
     return render(request, 'dashboard/feedback.html', context)
 
-# Admin/dashboard/Staff views for managing complaints would go here
-# ...
+# Staff views for managing complaints
+
+
+
+@login_required
+def staff_feedback_list(request):
+    # Get feedbacks for complaints resolved by this staff member
+    # We'll assume staff is associated with complaints through responses
+    # staff_responses = Complaint.objects.filter(status='resolved')
+
+    # Get all feedbacks for these complaints
+    # feedbacks = Feedback.objects.filter(complaint__status='resolved').order_by('-created_at')
+    feedbacks = Feedback.objects.all()
+
+    # Calculate statistics
+    total_feedback = feedbacks.count()
+    average_rating = feedbacks.aggregate(Avg('rating'))['rating__avg'] or 0
+    positive_feedback = feedbacks.filter(rating__gte=4).count()
+    negative_feedback = feedbacks.filter(rating__lte=2).count()
+
+    # Get staff profile
+    staff_profile = Profile.objects.get(user=request.user)
+
+    context = {
+        'feedbacks': feedbacks,
+        'total_feedback': total_feedback,
+        'average_rating': round(average_rating, 1),
+        'positive_feedback': positive_feedback,
+        'negative_feedback': negative_feedback,
+        'staff_profile': staff_profile
+    }
+    return render(request, 'dashboard/staff_feedback.html', context)
+
+def staff_dashboard(request):
+    # Get complaint statistics for staff
+
+
+    profile = Profile.objects.get(user = request.user)
+    total_complaints = Complaint.objects.count()
+    pending_complaints = Complaint.objects.filter(status='pending').count()
+    in_progress_complaints = Complaint.objects.filter(status='in_progress').count()
+    resolved_complaints = Complaint.objects.filter(status='resolved').count()
+
+    # Calculate resolution rate
+    resolution_rate = 0
+    if total_complaints > 0:
+        resolution_rate = (resolved_complaints / total_complaints) * 100
+
+    # Calculate average wait time for pending complaints
+    pending_complaints_with_dates = Complaint.objects.filter(status='pending')
+    if pending_complaints_with_dates.exists():
+        avg_wait_time = 0
+        for complaint in pending_complaints_with_dates:
+            if complaint.created_at:
+                days_waiting = (timezone.now() - complaint.created_at).days
+                avg_wait_time += days_waiting
+        avg_wait_time = avg_wait_time / pending_complaints_with_dates.count()
+        avg_wait_time = f"{avg_wait_time:.1f} days"
+    else:
+        avg_wait_time = "N/A"
+
+    # Calculate processing time for in-progress complaints
+    in_progress_complaints_with_dates = Complaint.objects.filter(status='in_progress')
+    if in_progress_complaints_with_dates.exists():
+        avg_processing_time = 0
+        for complaint in in_progress_complaints_with_dates:
+            if complaint.created_at:
+                days_processing = (timezone.now() - complaint.created_at).days
+                avg_processing_time += days_processing
+        avg_processing_time = avg_processing_time / in_progress_complaints_with_dates.count()
+        avg_processing_time = f"{avg_processing_time:.1f} days"
+    else:
+        avg_processing_time = "N/A"
+
+    # Calculate monthly increase in resolved complaints
+
+    # Get current month's resolved complaints
+    current_month = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    next_month = current_month + timedelta(days=32)
+    next_month = next_month.replace(day=1)
+
+    current_month_resolved = Complaint.objects.filter(
+        status='resolved',
+        updated_at__gte=current_month,
+        updated_at__lt=next_month
+    ).count()
+
+    # Get previous month's resolved complaints
+    prev_month = current_month - timedelta(days=1)
+    prev_month = prev_month.replace(day=1)
+    two_months_ago = prev_month - timedelta(days=32)
+    two_months_ago = two_months_ago.replace(day=1)
+
+    prev_month_resolved = Complaint.objects.filter(
+        status='resolved',
+        updated_at__gte=prev_month,
+        updated_at__lt=current_month
+    ).count()
+
+    # Calculate percentage increase
+    monthly_increase = "N/A"
+    monthly_percentage = 0
+
+    if prev_month_resolved > 0:
+        increase = current_month_resolved - prev_month_resolved
+        percentage = (increase / prev_month_resolved) * 100
+        monthly_increase = f"{percentage:+.1f}%"
+        monthly_percentage = min(100, max(0, percentage))  # Ensure percentage is between 0 and 100
+    elif current_month_resolved > 0:
+        monthly_increase = "+100%"
+        monthly_percentage = 100
+
+    # Get recent complaints
+    recent_complaints = Complaint.objects.all().order_by('-created_at')[:5]
+
+    # Get staff profile
+    staff_profile = Profile.objects.get(user=request.user)
+
+    # Get feedback for this staff member
+    staff_responses = ComplaintResponse.objects.filter(responder=request.user)
+    resolved_complaints_for_staff = [response.complaint for response in staff_responses.filter(complaint__status='resolved')]
+    staff_feedbacks = Feedback.objects.filter(complaint__in=resolved_complaints_for_staff).order_by('-created_at')
+    feedback_count = staff_feedbacks.count()
+
+    # Calculate feedback statistics
+    average_rating = staff_feedbacks.aggregate(Avg('rating'))['rating__avg'] or 0
+    positive_feedback = staff_feedbacks.filter(rating__gte=4).count()
+    negative_feedback = staff_feedbacks.filter(rating__lte=2).count()
+
+    context = {
+        'profile': profile,
+        'recent_complaints': recent_complaints,
+        'total_complaints': total_complaints,
+        'pending_complaints': pending_complaints,
+        'in_progress_complaints': in_progress_complaints,
+        'resolved_complaints': resolved_complaints,
+        'staff_profile': staff_profile,
+        'feedback_count': feedback_count,
+        'staff_feedbacks': staff_feedbacks,
+        'average_rating': round(average_rating, 1),
+        'positive_feedback': positive_feedback,
+        'negative_feedback': negative_feedback,
+        # New calculated values
+        'resolution_rate': round(resolution_rate, 1),
+        'avg_wait_time': avg_wait_time,
+        'avg_processing_time': avg_processing_time,
+        'monthly_increase': monthly_increase,
+        'monthly_percentage': monthly_percentage,
+        'wait_time_percentage': min(100, max(0, (float(avg_wait_time.replace(' days', '')) / 7) * 100)) if avg_wait_time != "N/A" else 0,
+        'processing_time_percentage': min(100, max(0, (float(avg_processing_time.replace(' days', '')) / 10) * 100)) if avg_processing_time != "N/A" else 0
+    }
+    return render(request, 'dashboard/staff_dashboard.html', context)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def signup(request):
+    if request.user.is_anonymous:
+        if request.method == 'POST':
+            fullname = request.POST.get('fullname', '').strip()
+            email = request.POST.get('email', '').lower()
+            password = request.POST.get('password')
+
+            # ✅ Break fullname into first and last name
+            parts = fullname.split()
+            first_name = parts[0] if len(parts) > 0 else ""
+            last_name = " ".join(parts[1:]) if len(parts) > 1 else ""
+
+            # ✅ Generate unique username from fullname
+            base_username = slugify(first_name + last_name)[:10]  # limit length
+            username = base_username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+
+            # Check if email already used
+            if User.objects.filter(email=email).exists():
+                messages.error(request, 'Email already used')
+                return redirect('signup')
+
+            # ✅ Create user
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name
+            )
+
+            # Create related profile
+            profile = Profile(user=user)
+            profile.save()
+
+            # If custom User model has 'role' or 'position'
+            if hasattr(user, "role"):
+                user.role = 'citizen'
+                user.save()
+
+            # Send welcome email
+            subject = 'Welcome to PTI Servicom'
+            email_from = settings.EMAIL_HOST_USER
+            message = f"""Hi {fullname}, thank you for registering on PTI Servicom. 
+            Your account has been successfully created. Please do not share your details with anyone."""
+            try:
+                send_mail("PTI Servicom", message, email_from, [email])
+            except Exception as e:
+                print(f"Email sending failed: {e}")  # Avoid breaking signup if email fails
+
+            # Auto login user
+            auth_login(request, user)
+
+            messages.success(request, 'Account created successfully, you are now logged in.')
+            return redirect('dashboard')
+        else:
+            return render(request, 'home/signup.html')
+    else:
+        return redirect("dashboard")
+
+
+
+@login_required
+def staff_view_complaint(request, reference):
+    # Get the complaint
+    complaint = get_object_or_404(Complaint, reference=reference)
+
+    # Get responses for this complaint
+    responses = ComplaintResponse.objects.filter(complaint=complaint).order_by('created_at')
+
+    # Get staff profile
+    staff_profile = Profile.objects.get(user=request.user)
+
+    context = {
+        'complaint': complaint,
+        'responses': responses,
+        'staff_profile': staff_profile
+    }
+    return render(request, 'dashboard/staff_view_complaint.html', context)
+
+
+
+
+
+
+
+
+
+
+
+@login_required
+def staff_update_complaint_status(request, reference):
+    # Get the complaint
+    complaint = get_object_or_404(Complaint, reference=reference)
+
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        resolved_details = request.POST.get('resolved_details', '')
+
+        if status in dict(Complaint.STATUS_CHOICES):
+            complaint.status = status
+            if status == 'resolved':
+                complaint.resolved_details = resolved_details
+            complaint.save()
+
+            # Add response if provided
+            response_text = request.POST.get('response', '')
+            if response_text:
+                ComplaintResponse.objects.create(
+                    complaint=complaint,
+                    responder=request.user,
+                    comment=response_text
+                )
+
+            # Send notification to user
+            if complaint.profile and complaint.profile.user.email:
+                send_mail(
+                    'Complaint Status Update',
+                    f'Your complaint {complaint.reference} status has been updated to {status}.',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [complaint.profile.user.email],
+                    fail_silently=True,
+                )
+
+            messages.success(request, 'Complaint status updated successfully!')
+            return redirect('staff_view_complaint', reference=reference)
+
+    return redirect('staff_view_complaint', reference=reference)
+
+
+
+
+
+
+
+
+@login_required
+def staff_add_response(request, reference):
+    # Get the complaint
+    complaint = get_object_or_404(Complaint, reference=reference)
+
+    if request.method == 'POST':
+        response_text = request.POST.get('response', '')
+
+        if response_text:
+            ComplaintResponse.objects.create(
+                complaint=complaint,
+                responder=request.user,
+                comment=response_text
+            )
+
+            # Send notification to user
+            if complaint.profile and complaint.profile.user.email:
+                send_mail(
+                    'New Response to Your Complaint',
+                    f'A new response has been added to your complaint {complaint.reference}.',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [complaint.profile.user.email],
+                    fail_silently=True,
+                )
+
+            messages.success(request, 'Response added successfully!')
+            return redirect('staff_view_complaint', reference=reference)
+
+    return redirect('staff_view_complaint', reference=reference)
+
+
+
+
+
+
+
+
+
+
+
+@login_required
+def staff_view_all_complaints(request):
+    # Get all complaints
+    complaints = Complaint.objects.all().order_by('-created_at')
+
+    # Get statistics
+    total_complaints = Complaint.objects.count()
+    pending_complaints = Complaint.objects.filter(status='pending').count()
+    in_progress_complaints = Complaint.objects.filter(status='in_progress').count()
+    resolved_complaints = Complaint.objects.filter(status='resolved').count()
+
+    # Get staff profile
+    staff_profile = Profile.objects.get(user=request.user)
+
+    context = {
+        'complaints': complaints,
+        'total_complaints': total_complaints,
+        'pending_complaints': pending_complaints,
+        'in_progress_complaints': in_progress_complaints,
+        'resolved_complaints': resolved_complaints,
+        'staff_profile': staff_profile
+    }
+    return render(request, 'dashboard/staff_view_all_complaints.html', context)
+
+
+
+
+
+
+
+
+@login_required
+def staff_profile_view(request):
+    # Get staff profile
+    staff_profile = Profile.objects.get(user=request.user)
+
+    context = {
+        'staff_profile': staff_profile
+    }
+    return render(request, 'dashboard/staff_profile.html', context)
+
+
+
+
+
+
+
+
+
+
+@login_required
+def staff_edit_profile(request):
+    # Get staff profile
+    staff_profile = Profile.objects.get(user=request.user)
+
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, request.FILES, instance=staff_profile)
+        if form.is_valid():
+            profile = form.save(commit=False)
+            profile.user = request.user
+            profile.save()
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('staff_profile_view')
+        else:
+            # Loop through form errors and add them to messages
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.capitalize()}: {error}")
+    else:
+        form = UserProfileForm(instance=staff_profile)
+
+    context = {
+        'staff_profile': staff_profile,
+        'form': form
+    }
+    return render(request, 'dashboard/staff_edit_profile.html', context)
+
+
+
+
+
+
+
+
+
+
+# Helper function to check if user is staff
+def is_staff(user):
+    return user.is_authenticated and hasattr(user, 'role') and user.role == 'staff'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def login(request):
+    if request.user.is_anonymous:
+        if request.method == "POST":
+            email = request.POST["email"].lower()
+            password = request.POST["password"]
+            user = authenticate(email=email, password=password)
+            if user is not None:
+                user.backend = 'django.contrib.auth.backends.ModelBackend'
+                auth_login(request, user)
+                messages.success(request, "Login successful!")
+                return redirect("dashboard")
+
+            else:
+                messages.error(request, "Invalid email or password")
+                return redirect('login')
+    else:
+        return redirect("dashboard")
+    return render(request, 'home/login.html')
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')

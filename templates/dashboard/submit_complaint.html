@@ -45,7 +45,6 @@
                                                 </label>
                                                 <div class="form-icon">
                                                     {{ form.type }}
-                                                    <!-- <i class="ri-arrow-down-s-line"></i> -->
                                                 </div>
                                                 {% if form.type.errors %}
                                                     <div class="text-danger mt-1">
@@ -64,7 +63,6 @@
                                                 </label>
                                                 <div class="form-icon">
                                                     {{ form.department }}
-                                                    <!-- <i class="ri-chat-4-line"></i> -->
                                                 </div>
                                                 {% if form.department.errors %}
                                                     <div class="text-danger mt-1">
@@ -82,9 +80,26 @@
                                                     <i class="ri-attachment-line me-1"></i> Attachment
                                                 </label>
                                                 <div id="dropzone" class="dropzone">
-
-                                                    <h1><i class="ri-attachment-line me-1"></i></h3>
-                                                    <p>Drag & Drop file here or click to upload</p>
+                                                    <div class="dropzone-content">
+                                                        <div class="file-icon">
+                                                            <i class="ri-attachment-line"></i>
+                                                        </div>
+                                                        <h5 class="dropzone-title">Drag & Drop file here or click to upload</h5>
+                                                        <p class="dropzone-subtitle text-muted">Supported formats: JPG, PNG, PDF, DOC</p>
+                                                    </div>
+                                                    
+                                                    <div class="dropzone-preview" id="preview-container">
+                                                        <button type="button" class="remove-file" onclick="removeFile()">
+                                                            <i class="ri-close-line"></i>
+                                                        </button>
+                                                        <img id="preview-image" src="" alt="Preview" style="display: none;">
+                                                        <div class="file-info" id="file-info" style="display: none;">
+                                                            <i class="ri-file-line me-1"></i>
+                                                            <span id="file-name"></span>
+                                                            <small class="text-muted d-block" id="file-size"></small>
+                                                        </div>
+                                                    </div>
+                                                    
                                                     {{ form.file }}
                                                 </div>
                                                 {% if form.file.errors %}
@@ -121,7 +136,7 @@
                                                 <button type="submit" class="btn btn-primary">
                                                     <i class="ri-send-plane-line me-1"></i> Submit Complaint
                                                 </button>
-                                                <a href="" class="btn btn-light ms-2">
+                                                <a href="" class="btn btn-light ms-2" onclick="resetForm()">
                                                     <i class="ri-refresh-line me-1"></i> Reset
                                                 </a>
                                             </div>
@@ -147,46 +162,239 @@
         border-radius: 0.475rem;
         padding: 30px;
         text-align: center;
-        /* background: #f8f9fa; */
         cursor: pointer;
-        transition: 0.3s;
+        transition: all 0.3s ease;
+        position: relative;
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
+    
     .dropzone:hover {
         background: #eef6ff;
+        border-color: #4d8ffc;
     }
+    
     .dropzone.dragover {
         background: #dbeafe;
         border-color: #2563eb;
+        transform: scale(1.02);
     }
+    
+    .dropzone.has-file {
+        border-color: #28a745;
+        background: #f8fff9;
+    }
+    
     .dropzone input[type="file"] {
-        display: none; /* Hide the default file input */
+        display: none;
+    }
+    
+    .dropzone-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.3s ease;
+    }
+    
+    .dropzone.has-file .dropzone-content {
+        display: none;
+    }
+    
+    .file-icon {
+        font-size: 3rem;
+        color: #86b7fe;
+        margin-bottom: 15px;
+    }
+    
+    .dropzone-title {
+        color: #495057;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+    
+    .dropzone-subtitle {
+        font-size: 0.875rem;
+        margin-bottom: 0;
+    }
+    
+    .dropzone-preview {
+        display: none;
+        position: relative;
+        max-width: 100%;
+        text-align: center;
+    }
+    
+    .dropzone.has-file .dropzone-preview {
+        display: block;
+    }
+    
+    .dropzone-preview img {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 0.375rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        object-fit: contain;
+    }
+    
+    .file-info {
+        margin-top: 15px;
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        color: #495057;
+        border: 1px solid #e9ecef;
+    }
+    
+    .remove-file {
+        position: absolute;
+        top: -12px;
+        right: -12px;
+        width: 28px;
+        height: 28px;
+        background: #dc3545;
+        border: 2px solid white;
+        border-radius: 50%;
+        color: white;
+        font-size: 14px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        transition: all 0.2s ease;
+        z-index: 10;
+    }
+    
+    .remove-file:hover {
+        background: #c82333;
+        transform: scale(1.1);
+    }
+    
+    /* Animation for file upload */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .dropzone-preview.show {
+        animation: fadeInUp 0.3s ease;
     }
 </style>
 
 <script>
-    // Dropzone Script
+    // Dropzone Script with Image Preview
     const dropzone = document.getElementById("dropzone");
     const fileInput = dropzone.querySelector("input[type='file']");
+    const previewContainer = document.getElementById("preview-container");
+    const previewImage = document.getElementById("preview-image");
+    const fileInfo = document.getElementById("file-info");
+    const fileName = document.getElementById("file-name");
+    const fileSize = document.getElementById("file-size");
 
-    dropzone.addEventListener("click", () => fileInput.click());
+    // Click to open file dialog
+    dropzone.addEventListener("click", (e) => {
+        if (!e.target.classList.contains('remove-file') && !e.target.closest('.remove-file')) {
+            fileInput.click();
+        }
+    });
 
+    // Drag and drop events
     dropzone.addEventListener("dragover", (e) => {
         e.preventDefault();
         dropzone.classList.add("dragover");
     });
 
-    dropzone.addEventListener("dragleave", () => {
+    dropzone.addEventListener("dragleave", (e) => {
+        e.preventDefault();
         dropzone.classList.remove("dragover");
     });
 
     dropzone.addEventListener("drop", (e) => {
         e.preventDefault();
         dropzone.classList.remove("dragover");
-        fileInput.files = e.dataTransfer.files;
-
-        // Show file name in dropzone
-        dropzone.querySelector("p").textContent = fileInput.files[0].name;
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleFileSelect(files[0]);
+        }
     });
+
+    // File input change event
+    fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+
+    // Handle file selection and preview
+    function handleFileSelect(file) {
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        
+        if (file.size > maxSize) {
+            alert('File size must be less than 10MB');
+            return;
+        }
+
+        dropzone.classList.add("has-file");
+        
+        // Set file name and size
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        
+        // Check if file is an image
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                previewImage.style.display = 'block';
+                fileInfo.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // For non-image files, show file info
+            previewImage.style.display = 'none';
+            fileInfo.style.display = 'block';
+        }
+        
+        previewContainer.classList.add('show');
+    }
+
+    // Remove file function
+    function removeFile() {
+        fileInput.value = '';
+        dropzone.classList.remove("has-file");
+        previewContainer.classList.remove('show');
+        previewImage.src = '';
+        previewImage.style.display = 'none';
+        fileInfo.style.display = 'none';
+    }
+
+    // Reset form function
+    function resetForm() {
+        removeFile();
+        document.querySelector('form').reset();
+    }
+
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
 </script>
 
 {% endblock content %}

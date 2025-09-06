@@ -1,0 +1,636 @@
+{% extends 'home/base.html' %}
+
+{% block title %}Servicom - Citizen Complaint Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #2563eb;
+        --secondary-color: #1e40af;
+        --success-color: #059669;
+        --warning-color: #d97706;
+        --danger-color: #dc2626;
+        --dark-color: #1f2937;
+        --light-color: #f8fafc;
+        --border-color: #e5e7eb;
+    }
+
+    .hero-section {
+        {% comment %} background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%); {% endcomment %}
+        background: #1f2937;
+        min-height: 70vh;
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 50%;
+        height: 100%;
+        background: url('https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800') center/cover;
+        opacity: 0.1;
+        z-index: 1;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 1.5rem;
+        line-height: 1.2;
+    }
+
+    .hero-subtitle {
+        font-size: 1.3rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
+    .btn-primary-custom {
+        background: white;
+        color: var(--primary-color);
+        border: none;
+        padding: 1rem 2rem;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        color: var(--primary-color);
+    }
+
+    .btn-outline-custom {
+        background: transparent;
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        padding: 1rem 2rem;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-custom:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: white;
+        color: white;
+    }
+
+    .stats-section {
+        background: var(--light-color);
+        padding: 4rem 0;
+    }
+
+    .stat-card {
+        text-align: center;
+        padding: 2rem;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-color);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-description {
+        color: #6b7280;
+        font-size: 0.95rem;
+    }
+
+    .features-section {
+        padding: 5rem 0;
+    }
+
+    .feature-card {
+        text-align: center;
+        padding: 2.5rem 2rem;
+        background: white;
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+        border-color: var(--primary-color);
+    }
+
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        font-size: 2rem;
+        color: white;
+    }
+
+    .feature-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 1rem;
+    }
+
+    .feature-description {
+        color: #6b7280;
+        line-height: 1.6;
+    }
+
+    .process-section {
+        background: var(--light-color);
+        padding: 5rem 0;
+    }
+
+    .process-step {
+        text-align: center;
+        position: relative;
+    }
+
+    .step-number {
+        width: 60px;
+        height: 60px;
+        background: var(--primary-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    .step-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--dark-color);
+        margin-bottom: 1rem;
+    }
+
+    .step-description {
+        color: #6b7280;
+    }
+
+    .cta-section {
+        background: linear-gradient(135deg, var(--dark-color) 0%, #374151 100%);
+        padding: 5rem 0;
+        color: white;
+    }
+
+    .section-title {
+        font-size: 2.8rem;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .section-subtitle {
+        font-size: 1.2rem;
+        text-align: center;
+        margin-bottom: 3rem;
+        color: #6b7280;
+    }
+
+    .badge-custom {
+        background: rgba(37, 99, 235, 0.1);
+        color: var(--primary-color);
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border: 1px solid rgba(37, 99, 235, 0.2);
+    }
+
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.1rem;
+        }
+        
+        .section-title {
+            font-size: 2.2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7 hero-content">
+                <div class="mb-4">
+                    <span class="badge-custom">
+                        <i class="fas fa-shield-alt me-2"></i>Trusted Complaint Management
+                    </span>
+                </div>
+                
+                <h1 class="hero-title">Servicom Complaint Management System</h1>
+                
+                <p class="hero-subtitle">
+                    Submit, track, and resolve complaints efficiently with our streamlined digital platform designed for Nigerian citizens and government services.
+                </p>
+                
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'login' %}" class="btn btn-primary-custom btn-lg">
+                        <i class="fas fa-plus me-2"></i>Submit Complaint
+                    </a>
+                    <a href="#how-it-works" class="btn btn-outline-custom btn-lg">
+                        <i class="fas fa-info-circle me-2"></i>How It Works
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="text-center">
+                    <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=600" 
+                         alt="Customer Service" 
+                         class="img-fluid rounded-4 shadow-lg"
+                         style="max-height: 400px; object-fit: cover;">
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-number text-primary" data-count="2456">0</div>
+                    <div class="stat-label">Total Complaints</div>
+                    <div class="stat-description">Successfully processed</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-number text-success" data-count="89">0%</div>
+                    <div class="stat-label">Resolution Rate</div>
+                    <div class="stat-description">Average success rate</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-number text-warning" data-count="3.2">0</div>
+                    <div class="stat-label">Response Time</div>
+                    <div class="stat-description">Days average</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card">
+                    <div class="stat-number text-info" data-count="95">0%</div>
+                    <div class="stat-label">Satisfaction</div>
+                    <div class="stat-description">Citizen satisfaction rate</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="badge-custom mb-3">
+                <i class="fas fa-star me-2"></i>Platform Features
+            </span>
+            <h2 class="section-title">Why Choose Servicom?</h2>
+            <p class="section-subtitle">Efficient complaint resolution with transparency and accountability</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <h3 class="feature-title">Easy Submission</h3>
+                    <p class="feature-description">Submit complaints quickly through our user-friendly interface with file attachments and detailed descriptions.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3 class="feature-title">Real-Time Tracking</h3>
+                    <p class="feature-description">Track your complaint status in real-time with automatic email notifications at every stage.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users-cog"></i>
+                    </div>
+                    <h3 class="feature-title">Staff Dashboard</h3>
+                    <p class="feature-description">Dedicated staff interface for efficient complaint assignment, resolution, and communication management.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Process Section -->
+<section id="how-it-works" class="process-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <span class="badge-custom mb-3">
+                <i class="fas fa-cogs me-2"></i>Simple Process
+            </span>
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-subtitle">Follow these simple steps to submit and track your complaint</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="process-step">
+                    <div class="step-number">1</div>
+                    <h4 class="step-title">Submit</h4>
+                    <p class="step-description">Fill out the complaint form with details and attach supporting documents.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="process-step">
+                    <div class="step-number">2</div>
+                    <h4 class="step-title">Assign</h4>
+                    <p class="step-description">Your complaint is automatically assigned to the appropriate department staff.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="process-step">
+                    <div class="step-number">3</div>
+                    <h4 class="step-title">Resolve</h4>
+                    <p class="step-description">Staff investigate and work to resolve your complaint with regular updates.</p>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="process-step">
+                    <div class="step-number">4</div>
+                    <h4 class="step-title">Close</h4>
+                    <p class="step-description">Receive final resolution notification via email with detailed outcome.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <h2 class="section-title text-white">Ready to Submit Your Complaint?</h2>
+                <p class="section-subtitle text-light">
+                    Join thousands of citizens who have successfully resolved their issues through our platform.
+                </p>
+                
+                <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
+                    <a href="{% url 'login' %}" class="btn btn-primary-custom btn-lg">
+                        <i class="fas fa-plus me-2"></i>Submit Complaint
+                    </a>
+                    <a href="#contact" class="btn btn-outline-custom btn-lg">
+                        <i class="fas fa-phone me-2"></i>Contact Support
+                    </a>
+                </div>
+                
+                <div class="row g-3 mt-5">
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-clock me-2 text-warning"></i>
+                            <span class="text-light">24/7 Available</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-shield-check me-2 text-success"></i>
+                            <span class="text-light">Secure Platform</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <i class="fas fa-envelope me-2 text-info"></i>
+                            <span class="text-light">Email Updates</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Enhanced counter animation with stagger effect
+    function animateCounters() {
+        const counters = document.querySelectorAll('[data-count]');
+        
+        counters.forEach((counter, index) => {
+            setTimeout(() => {
+                const target = parseFloat(counter.getAttribute('data-count'));
+                let count = 0;
+                const duration = 2000;
+                const increment = target / (duration / 16);
+                
+                const updateCounter = () => {
+                    if (count < target) {
+                        count += increment;
+                        if (counter.textContent.includes('%')) {
+                            counter.textContent = Math.ceil(count) + '%';
+                        } else {
+                            counter.textContent = Math.ceil(count);
+                        }
+                        requestAnimationFrame(updateCounter);
+                    } else {
+                        if (counter.textContent.includes('%')) {
+                            counter.textContent = target + '%';
+                        } else {
+                            counter.textContent = target;
+                        }
+                    }
+                };
+                
+                updateCounter();
+            }, index * 200);
+        });
+    }
+
+    // Intersection Observer for scroll animations
+    const observerOptions = {
+        threshold: 0.2,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Stats animation
+                if (entry.target.classList.contains('stats-section')) {
+                    animateCounters();
+                }
+                
+                // Feature cards animation
+                if (entry.target.classList.contains('features-section')) {
+                    const cards = entry.target.querySelectorAll('.feature-card');
+                    cards.forEach((card, index) => {
+                        setTimeout(() => {
+                            card.classList.add('animate');
+                            card.style.animation = `slideInFromBottom 0.8s ease-out ${index * 0.2}s forwards`;
+                        }, index * 100);
+                    });
+                }
+                
+                // Process steps animation
+                if (entry.target.classList.contains('process-section')) {
+                    const steps = entry.target.querySelectorAll('.process-step');
+                    steps.forEach((step, index) => {
+                        setTimeout(() => {
+                            step.style.animation = `slideInFromBottom 0.8s ease-out forwards`;
+                        }, index * 200);
+                    });
+                }
+            }
+        });
+    }, observerOptions);
+
+    // Initialize animations
+    document.addEventListener('DOMContentLoaded', () => {
+        // Observe sections for scroll animations
+        document.querySelectorAll('.stats-section, .features-section, .process-section').forEach(section => {
+            observer.observe(section);
+        });
+
+        // Hero image animation
+        const heroImg = document.querySelector('.hero-section img');
+        if (heroImg) {
+            setTimeout(() => {
+                heroImg.style.animation = 'fadeInRight 1.2s ease-out forwards';
+            }, 1000);
+        }
+
+        // Badge animations
+        const badges = document.querySelectorAll('.badge-custom');
+        badges.forEach((badge, index) => {
+            setTimeout(() => {
+                badge.style.animation = `fadeInUp 0.8s ease-out forwards`;
+            }, index * 200);
+        });
+
+        // Button hover effects
+        document.querySelectorAll('.btn-primary-custom, .btn-outline-custom').forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px)';
+            });
+            
+            btn.addEventListener('mouseleave', function() {
+                if (!this.matches(':active')) {
+                    this.style.transform = 'translateY(0)';
+                }
+            });
+        });
+
+        // Parallax effect for hero background
+        let ticking = false;
+        
+        function updateParallax() {
+            const scrolled = window.pageYOffset;
+            const heroSection = document.querySelector('.hero-section');
+            
+            if (heroSection) {
+                const rate = scrolled * -0.5;
+                heroSection.style.transform = `translateY(${rate}px)`;
+            }
+            
+            ticking = false;
+        }
+
+        function requestParallaxTick() {
+            if (!ticking) {
+                requestAnimationFrame(updateParallax);
+                ticking = true;
+            }
+        }
+
+        window.addEventListener('scroll', requestParallaxTick);
+    });
+
+    // Smooth scrolling with easing
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+                
+                // Add bounce effect to target
+                target.style.animation = 'pulse 1s ease-in-out';
+                setTimeout(() => {
+                    target.style.animation = '';
+                }, 1000);
+            }
+        });
+    });
+
+    // Add loading animation
+    window.addEventListener('load', () => {
+        document.body.classList.add('loaded');
+        
+        // Stagger hero content animation
+        const heroElements = document.querySelectorAll('.hero-content > *');
+        heroElements.forEach((el, index) => {
+            el.style.animationDelay = `${index * 0.2}s`;
+        });
+    });
+</script>
+{% endblock %}
