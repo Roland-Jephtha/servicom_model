@@ -63,7 +63,18 @@ def submit_complaint(request):
             # Send notification (simplified)
             send_mail(
                 'Complaint Submitted',
-                f'Your complaint has been submitted. Reference: {complaint.reference}',
+                f"""
+Dear {complaint.profile.user.first_name},
+
+We have received your complaint and it has been successfully submitted to our system.
+
+Your complaint reference number is: {complaint.reference}
+
+Our team will review your submission and keep you updated on the progress. If you have any further questions, please reply to this email.
+
+Best regards,
+Servicom Service
+""",
                 settings.DEFAULT_FROM_EMAIL,
                 [complaint.profile.user.email] if complaint.profile.user.email else [],
                 fail_silently=True,
@@ -188,11 +199,11 @@ def dashboard(request):
         # Citizen dashboard with their complaints
         profile = Profile.objects.get(user = request.user)
 
-        user_complaints = Complaint.objects.filter(profile=profile).order_by('-created_at')[:5]
-        user_total = Complaint.objects.filter(profile=profile).count()
-        user_pending = Complaint.objects.filter(profile=profile, status='pending').count()
-        user_in_progress = Complaint.objects.filter(profile=profile, status='in_progress').count()
-        user_resolved = Complaint.objects.filter(profile=profile, status='resolved').count()
+        user_complaints = Complaint.objects.filter(profile__user=request.user).order_by('-created_at')[:5]
+        user_total = Complaint.objects.filter(profile__user=request.user).count()
+        user_pending = Complaint.objects.filter(profile__user=request.user, status='pending').count()
+        user_in_progress = Complaint.objects.filter(profile__user=request.user, status='in_progress').count()
+        user_resolved = Complaint.objects.filter(profile__user=request.user, status='resolved').count()
 
         context = {
             'user_complaints': user_complaints,
@@ -312,7 +323,8 @@ def staff_feedback_list(request):
 
     # Get all feedbacks for these complaints
     # feedbacks = Feedback.objects.filter(complaint__status='resolved').order_by('-created_at')
-    feedbacks = Feedback.objects.all()
+    staff_profile = Profile.objects.get(user=request.user)
+    feedbacks = Feedback.objects.filter(complaint__department=staff_profile.department)
 
     # Calculate statistics
     total_feedback = feedbacks.count()
@@ -338,10 +350,10 @@ def staff_dashboard(request):
 
 
     profile = Profile.objects.get(user = request.user)
-    total_complaints = Complaint.objects.count()
-    pending_complaints = Complaint.objects.filter(status='pending').count()
-    in_progress_complaints = Complaint.objects.filter(status='in_progress').count()
-    resolved_complaints = Complaint.objects.filter(status='resolved').count()
+    total_complaints = Complaint.objects.filter(department=profile.department).count()
+    pending_complaints = Complaint.objects.filter(status='pending', department=profile.department).count()
+    in_progress_complaints = Complaint.objects.filter(status='in_progress', department=profile.department).count()
+    resolved_complaints = Complaint.objects.filter(status='resolved', department=profile.department).count()
 
     # Calculate resolution rate
     resolution_rate = 0
@@ -349,7 +361,7 @@ def staff_dashboard(request):
         resolution_rate = (resolved_complaints / total_complaints) * 100
 
     # Calculate average wait time for pending complaints
-    pending_complaints_with_dates = Complaint.objects.filter(status='pending')
+    pending_complaints_with_dates = Complaint.objects.filter(status='pending', department=profile.department)
     if pending_complaints_with_dates.exists():
         avg_wait_time = 0
         for complaint in pending_complaints_with_dates:
@@ -362,7 +374,7 @@ def staff_dashboard(request):
         avg_wait_time = "N/A"
 
     # Calculate processing time for in-progress complaints
-    in_progress_complaints_with_dates = Complaint.objects.filter(status='in_progress')
+    in_progress_complaints_with_dates = Complaint.objects.filter(status='in_progress', department=profile.department)
     if in_progress_complaints_with_dates.exists():
         avg_processing_time = 0
         for complaint in in_progress_complaints_with_dates:
@@ -384,7 +396,8 @@ def staff_dashboard(request):
     current_month_resolved = Complaint.objects.filter(
         status='resolved',
         updated_at__gte=current_month,
-        updated_at__lt=next_month
+        updated_at__lt=next_month,
+        department=profile.department
     ).count()
 
     # Get previous month's resolved complaints
@@ -396,7 +409,8 @@ def staff_dashboard(request):
     prev_month_resolved = Complaint.objects.filter(
         status='resolved',
         updated_at__gte=prev_month,
-        updated_at__lt=current_month
+        updated_at__lt=current_month,
+        department=profile.department
     ).count()
 
     # Calculate percentage increase
@@ -413,13 +427,13 @@ def staff_dashboard(request):
         monthly_percentage = 100
 
     # Get recent complaints
-    recent_complaints = Complaint.objects.all().order_by('-created_at')[:5]
+    recent_complaints = Complaint.objects.filter(department=profile.department).order_by('-created_at')[:5]
 
     # Get staff profile
     staff_profile = Profile.objects.get(user=request.user)
 
     # Get feedback for this staff member
-    staff_responses = ComplaintResponse.objects.filter(responder=request.user)
+    staff_responses = ComplaintResponse.objects.filter(responder=request.user, complaint__department=profile.department)
     resolved_complaints_for_staff = [response.complaint for response in staff_responses.filter(complaint__status='resolved')]
     staff_feedbacks = Feedback.objects.filter(complaint__in=resolved_complaints_for_staff).order_by('-created_at')
     feedback_count = staff_feedbacks.count()
@@ -514,8 +528,16 @@ def signup(request):
             # Send welcome email
             subject = 'Welcome to PTI Servicom'
             email_from = settings.EMAIL_HOST_USER
-            message = f"""Hi {fullname}, thank you for registering on PTI Servicom. 
-            Your account has been successfully created. Please do not share your details with anyone."""
+            message = f"""
+                Dear {fullname},
+
+                Thank you for registering with PTI Servicom. Your account has been successfully created and you can now log in to access our services.
+
+                Please keep your account details secure and do not share them with anyone. If you have any questions or need assistance, feel free to contact us.
+
+                Best regards,
+                Servicom Service
+                """
             try:
                 send_mail("PTI Servicom", message, email_from, [email])
             except Exception as e:
@@ -536,7 +558,8 @@ def signup(request):
 @login_required
 def staff_view_complaint(request, reference):
     # Get the complaint
-    complaint = get_object_or_404(Complaint, reference=reference)
+    staff_profile = Profile.objects.get(user=request.user)
+    complaint = get_object_or_404(Complaint, reference=reference, department=staff_profile.department)
 
     # Get responses for this complaint
     responses = ComplaintResponse.objects.filter(complaint=complaint).order_by('created_at')
@@ -564,7 +587,8 @@ def staff_view_complaint(request, reference):
 @login_required
 def staff_update_complaint_status(request, reference):
     # Get the complaint
-    complaint = get_object_or_404(Complaint, reference=reference)
+    staff_profile = Profile.objects.get(user=request.user)
+    complaint = get_object_or_404(Complaint, reference=reference, department=staff_profile.department)
 
     if request.method == 'POST':
         status = request.POST.get('status')
@@ -589,7 +613,16 @@ def staff_update_complaint_status(request, reference):
             if complaint.profile and complaint.profile.user.email:
                 send_mail(
                     'Complaint Status Update',
-                    f'Your complaint {complaint.reference} status has been updated to {status}.',
+                    f"""
+                        Dear {complaint.profile.user.first_name},
+
+                        We would like to inform you that the status of your complaint (Reference: {complaint.reference}) has been updated to: {status}.
+
+                        If you have any questions or require further assistance, please do not hesitate to contact us.
+
+                        Best regards,
+                        Servicom Service
+                        """,
                     settings.DEFAULT_FROM_EMAIL,
                     [complaint.profile.user.email],
                     fail_silently=True,
@@ -610,7 +643,8 @@ def staff_update_complaint_status(request, reference):
 @login_required
 def staff_add_response(request, reference):
     # Get the complaint
-    complaint = get_object_or_404(Complaint, reference=reference)
+    staff_profile = Profile.objects.get(user=request.user)
+    complaint = get_object_or_404(Complaint, reference=reference, department=staff_profile.department)
 
     if request.method == 'POST':
         response_text = request.POST.get('response', '')
@@ -626,7 +660,18 @@ def staff_add_response(request, reference):
             if complaint.profile and complaint.profile.user.email:
                 send_mail(
                     'New Response to Your Complaint',
-                    f'A new response has been added to your complaint {complaint.reference}.',
+                    f"""
+                        Dear {complaint.profile.user.first_name},
+
+                        A new response has been added to your complaint (Reference: {complaint.reference}).
+
+                        Please log in to your Servicom dashboard to view the details and continue communication if needed.
+
+                        Thank you for using our service.
+
+                        Best regards,
+                        Servicom Service
+                        """,
                     settings.DEFAULT_FROM_EMAIL,
                     [complaint.profile.user.email],
                     fail_silently=True,
@@ -650,7 +695,8 @@ def staff_add_response(request, reference):
 @login_required
 def staff_view_all_complaints(request):
     # Get all complaints
-    complaints = Complaint.objects.all().order_by('-created_at')
+    staff_profile = Profile.objects.get(user=request.user)
+    complaints = Complaint.objects.filter(department=staff_profile.department).order_by('-created_at')
 
     # Get statistics
     total_complaints = Complaint.objects.count()

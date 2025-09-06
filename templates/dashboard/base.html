@@ -206,12 +206,12 @@
                     <div class="dropdown-menu dropdown-menu-end">
                         <!-- item-->
                         <h6 class="dropdown-header">Welcome {{profile.user.username}}!</h6>
-                        <a class="dropdown-item" href="pages-profile.html"><i class="mdi mdi-account-circle text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Profile</span></a>
-                        <a class="dropdown-item" href="apps-chat.html"><i class="mdi mdi-message-text-outline text-muted fs-16 align-middle me-1"></i> <span class="align-middle">My complaints</span></a>
-                        <a class="dropdown-item" href="apps-tasks-kanban.html"><i class="mdi mdi-calendar-check-outline text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Feedbacks</span></a>
+                        <a class="dropdown-item" href="{% url 'profile' %}"><i class="mdi mdi-account-circle text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Profile</span></a>
+                        {% comment %} <a class="dropdown-item" href="apps-chat.html"><i class="mdi mdi-message-text-outline text-muted fs-16 align-middle me-1"></i> <span class="align-middle">My complaints</span></a> {% endcomment %}
+                        {% comment %} <a class="dropdown-item" href="apps-tasks-kanban.html"><i class="mdi mdi-calendar-check-outline text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Feedbacks</span></a> {% endcomment %}
                         <div class="dropdown-divider"></div>
 
-                        <a class="dropdown-item" href="auth-logout-basic.html"><i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> <span class="align-middle" data-key="t-logout">Logout</span></a>
+                        <a class="dropdown-item" href="{% url 'logout' %}"><i class="mdi mdi-logout text-muted fs-16 align-middle me-1"></i> <span class="align-middle" data-key="t-logout">Logout</span></a>
                     </div>
                 </div>
             
@@ -329,7 +329,7 @@
 
   
     <li class="nav-item">
-    <a class="nav-link menu-link" href="">
+    <a class="nav-link menu-link" href="{% url 'staff_feedback_list' %}">
       <i class="ri-feedback-line"></i> <span data-key="t-widgets">Feedback</span>
     </a>
   </li>
@@ -400,42 +400,6 @@
 
 
     
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>         
-        
-        
-        
-
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-              {% if messages %}
-                {% for message in messages %}
-                  {% if message.tags == 'success' %}
-                    Swal.fire({
-                      icon: 'success',
-                      title: 'Success!',
-                      text: '{{ message }}',
-                      confirmButtonText: 'OK'
-                    });
-                  {% elif message.tags == 'error' %}
-                    Swal.fire({
-                      icon: 'error',
-                      title: 'Oops...',
-                      text: '{{ message }}',
-                      confirmButtonText: 'OK'
-                    });
-                  {% elif message.tags == 'info' %}
-                    Swal.fire({
-                      icon: 'info',
-                      title: 'info...',
-                      text: '{{ message }}',
-                      confirmButtonText: 'OK'
-                    });
-                  {% endif %}
-                {% endfor %}
-              {% endif %}
-            });
-          </script>
-
 
 
     {% block content %}
@@ -461,41 +425,54 @@
 
 
     <script>
+        // Custom theme storage using localStorage
+        function getTheme() {
+            return localStorage.getItem('servicom_theme') || 'light';
+        }
+        function setTheme(theme) {
+            localStorage.setItem('servicom_theme', theme);
+            document.documentElement.setAttribute('data-theme', theme);
+            if (theme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.getElementById('theme-icon').classList.replace('bx-moon', 'bx-sun');
+            } else {
+                document.body.classList.remove('dark-theme');
+                document.getElementById('theme-icon').classList.replace('bx-sun', 'bx-moon');
+            }
+        }
+        // Apply theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTheme(getTheme());
+            document.getElementById('theme-toggle').addEventListener('click', function() {
+                let theme = getTheme() === 'dark' ? 'light' : 'dark';
+                setTheme(theme);
+            });
+        });
+    </script>
 
 
 
 
-        // Check for saved theme preference
-const currentTheme = localStorage.getItem("theme");
 
-// Apply the saved theme if exists
-if (currentTheme) {
-    document.documentElement.setAttribute("data-theme", currentTheme);
-    if (currentTheme === "dark") {
-        document.body.classList.add("dark-theme");
-        document.getElementById("theme-icon").classList.replace("bx-moon", "bx-sun");
-    }
-}
-
-// Theme toggle functionality
-document.getElementById("theme-toggle").addEventListener("click", function() {
-    // Toggle dark theme class
-    document.body.classList.toggle("dark-theme");
-    
-    // Check if dark theme is active
-    let theme = "light";
-    if (document.body.classList.contains("dark-theme")) {
-        theme = "dark";
-        document.getElementById("theme-icon").classList.replace("bx-moon", "bx-sun");
-    } else {
-        document.getElementById("theme-icon").classList.replace("bx-sun", "bx-moon");
-    }
-    
-    // Save the theme preference
-    localStorage.setItem("theme", theme);
-    document.documentElement.setAttribute("data-theme", theme);
-});
-
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            {% if messages %}
+                {% for message in messages %}
+                    Swal.fire({
+                        icon: '{{ message.tags|default:"info" }}',
+                        title: (function() {
+                            if ('{{ message.tags }}' === 'success') return 'Success!';
+                            if ('{{ message.tags }}' === 'error') return 'Oops...';
+                            if ('{{ message.tags }}' === 'info') return 'Info';
+                            return 'Notice';
+                        })(),
+                        text: '{{ message }}',
+                        confirmButtonText: 'OK'
+                    });
+                {% endfor %}
+            {% endif %}
+        });
     </script>
 
 
