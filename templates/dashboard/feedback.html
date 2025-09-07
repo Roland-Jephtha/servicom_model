@@ -135,13 +135,13 @@
                                                         </td>
                                                         <td>
                                                             <div class="text-warning">
-                                                                {% for i in "12345" %}
-                                                                    {% if i <= feedback.rating %}
-                                                                        <i class="ri-star-fill"></i>
-                                                                    {% else %}
-                                                                        <i class="ri-star-line"></i>
-                                                                    {% endif %}
-                                                                {% endfor %}
+                                                            {% for i in "12345" %}
+                                                        {% if i|add:0 <= feedback.rating %}
+                                                            <i class="mdi mdi-star text-warning"></i>
+                                                        {% else %}
+                                                            <i class="mdi mdi-star-outline text-muted"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
                                                             </div>
                                                         </td>
                                                         <td>{{ feedback.comment|truncatechars:50 }}</td>

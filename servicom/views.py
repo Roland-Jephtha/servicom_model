@@ -102,6 +102,8 @@ Servicom Service
 def track_complaint(request, reference):
     profile = get_object_or_404(Profile, user=request.user)
     complaint = get_object_or_404(Complaint, reference=reference, profile=profile)
+    responses = ComplaintResponse.objects.filter(complaint=complaint).order_by('created_at')
+
     feedback_given = hasattr(complaint, 'feedback')
 
     if request.method == 'POST':
@@ -117,6 +119,7 @@ def track_complaint(request, reference):
 
     return render(request, 'dashboard/track_complaint.html', {
         'complaint': complaint,
+        'responses': responses,
         'feedback_given': feedback_given,
         'form': form
     })
