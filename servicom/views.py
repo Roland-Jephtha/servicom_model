@@ -51,39 +51,131 @@ def charter(request):
 
 
 
+# def submit_complaint(request):
+#     if request.method == 'POST':
+#         profile = Profile.objects.get(user = request.user)
+#         form = ComplaintForm(request.POST, request.FILES)
+#         if form.is_valid():
+#             complaint = form.save(commit=False)
+#             if request.user.is_authenticated:
+#                 complaint.profile = profile
+#             complaint.save()
+#             # Send notification (simplified)
+#             send_mail(
+#                 'Complaint Submitted',
+#                 f"""
+# Dear {complaint.profile.user.first_name},
+
+# We have received your complaint and it has been successfully submitted to our system.
+
+# Your complaint reference number is: {complaint.reference}
+
+# Our team will review your submission and keep you updated on the progress. If you have any further questions, please reply to this email.
+
+# Best regards,
+# Servicom Service
+# """,
+#                 settings.DEFAULT_FROM_EMAIL,
+#                 [complaint.profile.user.email] if complaint.profile.user.email else [],
+#                 fail_silently=True,
+#             )
+#             messages.success(request, 'Complaint submitted successfully!')
+#             return redirect('track_complaint', reference=complaint.reference)
+#     else:
+#         form = ComplaintForm()
+#     return render(request, 'dashboard/submit_complaint.html', {'form': form})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def submit_complaint(request):
     if request.method == 'POST':
-        profile = Profile.objects.get(user = request.user)
+        profile = Profile.objects.get(user=request.user)
         form = ComplaintForm(request.POST, request.FILES)
         if form.is_valid():
             complaint = form.save(commit=False)
             if request.user.is_authenticated:
                 complaint.profile = profile
             complaint.save()
-            # Send notification (simplified)
+
+            # 📩 Email to the user
             send_mail(
                 'Complaint Submitted',
                 f"""
-Dear {complaint.profile.user.first_name},
+                        Dear {complaint.profile.user.first_name},
 
-We have received your complaint and it has been successfully submitted to our system.
+                        We have received your complaint and it has been successfully submitted to our system.
 
-Your complaint reference number is: {complaint.reference}
+                        Your complaint reference number is: {complaint.reference}
 
-Our team will review your submission and keep you updated on the progress. If you have any further questions, please reply to this email.
+                        Our team will review your submission and keep you updated on the progress. If you have any further questions, please reply to this email.
 
-Best regards,
-Servicom Service
-""",
+                        Best regards,
+                        Servicom Service
+                        """,
                 settings.DEFAULT_FROM_EMAIL,
                 [complaint.profile.user.email] if complaint.profile.user.email else [],
                 fail_silently=True,
             )
+
+            # 📩 Email to staff of the same department
+            staff_members = User.objects.filter(
+                profile__department=complaint.department,  # assuming Profile has department FK
+            )
+
+            staff_emails = [staff.email for staff in staff_members if staff.email]
+
+            if staff_emails:
+                send_mail(
+                    'New Complaint in Your Department',
+                    f"""
+                    Dear Staff,
+
+                    A new complaint has been submitted to the {complaint.department.name} department.
+
+                    Reference Number: {complaint.reference}
+                    Complaint Type: {complaint.type}
+                    Description: {complaint.description}
+
+                    Please log in to the SERVICOM dashboard to review and take action.
+
+                    Best regards,
+                    Servicom System
+                    """,
+                    settings.DEFAULT_FROM_EMAIL,
+                    staff_emails,
+                    fail_silently=True,
+                )
+
             messages.success(request, 'Complaint submitted successfully!')
             return redirect('track_complaint', reference=complaint.reference)
     else:
         form = ComplaintForm()
     return render(request, 'dashboard/submit_complaint.html', {'form': form})
+
+
+
+
+
+
+
+
+
 
 
 
