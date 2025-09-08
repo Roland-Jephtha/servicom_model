@@ -611,10 +611,7 @@ def signup(request):
                 last_name=last_name
             )
 
-            # Create related profile
-            profile = Profile(user=user)
-            profile.save()
-
+           
             # If custom User model has 'role' or 'position'
             if hasattr(user, "role"):
                 user.role = 'citizen'
