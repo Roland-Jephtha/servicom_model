@@ -2,6 +2,11 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 import uuid
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+
 
 # User roles
 class User(AbstractUser):
@@ -39,6 +44,7 @@ class Department(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone_number = models.CharField(max_length=15, blank=True)
+    mat_no = models.CharField(max_length=30, blank=True, null = True)
     address = models.TextField(blank=True)
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
     bio = models.TextField(null = True)
@@ -70,7 +76,7 @@ class Complaint(models.Model):
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     file = models.FileField(upload_to='complaints/', blank=True, null=True)
-    resolved_details = models.TextField(null = True, help_text = "Enter the details of how issue was resolved")
+    resolved_details = models.TextField(null = True, help_text = "Enter the details of how issue was resolved", blank = True)
 
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -105,4 +111,45 @@ class Feedback(models.Model):
 
 
 
+from django.db.models.signals import pre_save, post_save
+from django.dispatch import receiver
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
+
+# Store old is_active state before saving
+@receiver(pre_save, sender=User)
+def store_old_is_active(sender, instance, **kwargs):
+    if instance.pk:  # existing user
+        try:
+            old_instance = sender.objects.get(pk=instance.pk)
+            instance._old_is_active = old_instance.is_active
+        except sender.DoesNotExist:
+            instance._old_is_active = instance.is_active
+    else:
+        instance._old_is_active = instance.is_active
+
+
+@receiver(post_save, sender=User)
+def create_or_update_user_profile(sender, instance, created, **kwargs):
+    # Ensure profile exists
+    Profile.objects.get_or_create(user=instance)
+    instance.profile.save()
+
+    # Only send if existing user got activated
+    if not created:
+        old_is_active = getattr(instance, "_old_is_active", None)
+        if old_is_active is False and instance.is_active is True:
+            subject = 'Your PTI Servicom Account is Now Active'
+            message = f"""
+Dear {instance.get_full_name() or instance.username},
+
+Your account has been approved and activated by the administrator. You can now log in and access all services.
+
+Best regards,
+Servicom Service
+"""
+            email_from = settings.EMAIL_HOST_USER
+            send_mail(subject, message, email_from, [instance.email], fail_silently=True)

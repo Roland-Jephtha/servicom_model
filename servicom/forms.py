@@ -60,9 +60,24 @@ class CustomAuthenticationForm(AuthenticationForm):
 
 
 class UserProfileForm(forms.ModelForm):
+    mat_no = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'})
+    )
+    first_name = forms.CharField(
+        max_length=30,
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    last_name = forms.CharField(
+        max_length=30,
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
     class Meta:
         model = Profile
-        fields = ['user', 'department', 'bio', 'profile_image', 'phone_number', 'address']
+        fields = ['user', 'department', 'bio', 'profile_image', 'phone_number', 'address', 'first_name', 'last_name']
         widgets = {
             'address': forms.TextInput(attrs={'class': 'form-control'}),
             'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
@@ -75,6 +90,37 @@ class UserProfileForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['user'].required = False   # ✅ prevent "required" erro
+        # Set initial values for first_name and last_name from user model
+        if self.instance and self.instance.user:
+            self.fields['first_name'].initial = self.instance.user.first_name
+            self.fields['last_name'].initial = self.instance.user.last_name
+            # Only show mat_no for users (not staff)
+            if hasattr(self.instance.user, 'role') and getattr(self.instance.user, 'role', None) == 'citizen':
+                self.fields['mat_no'].initial = getattr(self.instance, 'mat_no', '')
+            else:
+                self.fields.pop('mat_no', None)
+        else:
+            self.fields.pop('mat_no', None)
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        # Always set profile.user from instance if missing
+        if not profile.user:
+            profile.user = self.instance.user
+        user = profile.user
+        if user:
+            user.first_name = self.cleaned_data['first_name']
+            user.last_name = self.cleaned_data['last_name']
+            # Only update mat_no if user is citizen and field is present
+            if hasattr(user, 'role') and getattr(user, 'role', None) == 'citizen' and 'mat_no' in self.cleaned_data:
+                profile.mat_no = self.cleaned_data['mat_no']
+            if commit:
+                user.save()
+                profile.save()
+        else:
+            if commit:
+                profile.save()
+        return profile
 
 
 

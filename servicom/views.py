@@ -1,3 +1,4 @@
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Avg
 from django.utils import timezone
@@ -39,11 +40,16 @@ User = get_user_model()
 
 
 def home(request):
-    return render(request, 'home/home.html')
+    complaint = Complaint.objects.all()
+    context = {
+        "complaint": complaint
+    }
+    return render(request, 'home/home.html', context)
 
 
 
-
+def pending_approval(request):
+    return render(request, 'home/pending_approval.html')
 
 def charter(request):
     return render(request, 'dashboard/charter.html')
@@ -278,6 +284,7 @@ class SignUpView(CreateView):
 
 def dashboard(request):
     # Get complaint statistics for all users
+    profile = Profile.objects.get(user = request.user)
     total_complaints = Complaint.objects.count()
     pending_complaints = Complaint.objects.filter(status='pending').count()
     in_progress_complaints = Complaint.objects.filter(status='in_progress').count()
@@ -306,6 +313,7 @@ def dashboard(request):
             'pending_complaints': user_pending,
             'in_progress_complaints': user_in_progress,
             'resolved_complaints': user_resolved,
+            'profile': profile,
         }
         return render(request, 'dashboard/dashboard_user.html', context)
     else:
@@ -331,20 +339,19 @@ def edit_profile(request):
     profile = Profile.objects.get(user=request.user)
 
     if request.method == 'POST':
-        form = UserProfileForm(request.POST, request.FILES, instance=profile)  # ✅ use profile, not request.user
+        form = UserProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
-            profile = form.save(commit=False)
-            profile.user = request.user  # just to be safe
-            profile.save()
+            # Ensure profile.user is set before saving
+            form.instance.user = request.user
+            profile = form.save(commit=True)
             messages.success(request, 'Profile updated successfully!')
             return redirect('edit_profile')
         else:
-            # Loop through form errors and add them to messages
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"{field.capitalize()}: {error}")
     else:
-        form = UserProfileForm(instance=profile)  # ✅ use profile, not request.user
+        form = UserProfileForm(instance=profile)
 
     context = {
         'profile': profile,
@@ -573,36 +580,34 @@ def staff_dashboard(request):
 
 
 
-
-
-
-
 def signup(request):
     if request.user.is_anonymous:
         if request.method == 'POST':
             fullname = request.POST.get('fullname', '').strip()
             email = request.POST.get('email', '').lower()
             password = request.POST.get('password')
+            department_id = request.POST.get('department')
+            mat_no = request.POST.get('mat_no', '').strip()
 
-            # ✅ Break fullname into first and last name
+            # Split fullname
             parts = fullname.split()
             first_name = parts[0] if len(parts) > 0 else ""
             last_name = " ".join(parts[1:]) if len(parts) > 1 else ""
 
-            # ✅ Generate unique username from fullname
-            base_username = slugify(first_name + last_name)[:10]  # limit length
+            # Generate unique username
+            base_username = slugify(first_name + last_name)[:10]
             username = base_username
             counter = 1
             while User.objects.filter(username=username).exists():
                 username = f"{base_username}{counter}"
                 counter += 1
 
-            # Check if email already used
+            # Prevent duplicate email
             if User.objects.filter(email=email).exists():
                 messages.error(request, 'Email already used')
                 return redirect('signup')
 
-            # ✅ Create user
+            # Create user with is_active=False
             user = User.objects.create_user(
                 username=username,
                 email=email,
@@ -610,23 +615,29 @@ def signup(request):
                 first_name=first_name,
                 last_name=last_name
             )
-
-            # Create related profile
-            profile = Profile(user=user)
-            profile.save()
-
-            # If custom User model has 'role' or 'position'
+            user.is_active = False
             if hasattr(user, "role"):
                 user.role = 'citizen'
-                user.save()
+            user.save()
 
-            # Send welcome email
-            subject = 'Welcome to PTI Servicom'
+            # Update Profile with department and mat_no
+            if hasattr(user, "profile"):
+                from .models import Department
+                try:
+                    department = Department.objects.get(id=department_id)
+                    user.profile.department = department
+                    user.profile.mat_no = mat_no
+                    user.profile.save()
+                except Department.DoesNotExist:
+                    pass
+
+            # Optionally send email to user about pending approval
+            subject = 'Account Pending Approval - PTI Servicom'
             email_from = settings.EMAIL_HOST_USER
             message = f"""
                 Dear {fullname},
 
-                Thank you for registering with PTI Servicom. Your account has been successfully created and you can now log in to access our services.
+                Thank you for registering with PTI Servicom. Your account has been created and is pending approval by an administrator. You will be notified by email once your account is activated.
 
                 Please keep your account details secure and do not share them with anyone. If you have any questions or need assistance, feel free to contact us.
 
@@ -634,19 +645,29 @@ def signup(request):
                 Servicom Service
                 """
             try:
-                send_mail("PTI Servicom", message, email_from, [email])
+                send_mail(subject, message, email_from, [email])
             except Exception as e:
-                print(f"Email sending failed: {e}")  # Avoid breaking signup if email fails
+                print(f"Email sending failed: {e}")
 
-            # Auto login user
-            auth_login(request, user)
-
-            messages.success(request, 'Account created successfully, you are now logged in.')
-            return redirect('dashboard')
+            # Redirect to pending approval page
+            messages.info(request, 'Your account has been created. Please wait for admin approval before you can log in.')
+            return redirect('pending_approval')
         else:
-            return render(request, 'home/signup.html')
+            from .models import Department
+            departments = Department.objects.all()
+            return render(request, 'home/signup.html', {"departments": departments})
     else:
         return redirect("dashboard")
+
+
+
+
+
+
+
+
+
+
 
 
 

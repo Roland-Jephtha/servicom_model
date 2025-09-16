@@ -78,17 +78,41 @@
                             <div class="card-body p-4">
                                 <div class="tab-content">
                                     <div class="tab-pane active" id="personalDetails" role="tabpanel">
+                                            {% if form.mat_no %}
+                                            <div class="col-lg-6">
+                                                <div class="mb-3">
+                                                    <label for="{{ form.mat_no.id_for_label }}" class="form-label">
+                                                        <i class="ri-id-card-line"></i> Matriculation Number
+                                                    </label>
+                                                    {{ form.mat_no }}
+                                                </div>
+                                            </div>
+                                            {% endif %}
                                         <div class="row">
                                             <div class="col-lg-6">
                                                 <div class="mb-3">
-                                                    <label class="form-label">First Name</label>
-                                                    <input type="text" class="form-control" value="{{ profile.user.first_name }}" readonly>
+                                                    <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name</label>
+                                                    {{ form.first_name }}
+                                                    {% if form.first_name.errors %}
+                                                    <div class="text-danger">
+                                                        {% for error in form.first_name.errors %}
+                                                        <small>{{ error }}</small>
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                             <div class="col-lg-6">
                                                 <div class="mb-3">
-                                                    <label class="form-label">Last Name</label>
-                                                    <input type="text" class="form-control" value="{{ profile.user.last_name }}" readonly>
+                                                    <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name</label>
+                                                    {{ form.last_name }}
+                                                    {% if form.last_name.errors %}
+                                                    <div class="text-danger">
+                                                        {% for error in form.last_name.errors %}
+                                                        <small>{{ error }}</small>
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                             <div class="col-lg-6">

@@ -21,6 +21,28 @@
 
                         <!-- Login Form -->
                         <form method="post" novalidate class="needs-validation">
+                            <!-- Matriculation Number Field -->
+                            <div class="mb-4">
+                                <label for="id_mat_no" class="form-label fw-semibold text-dark">Matriculation Number</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="fas fa-id-card text-muted"></i>
+                                    </span>
+                                    <input 
+                                        type="text" 
+                                        class="form-control border-start-0 bg-light" 
+                                        id="id_mat_no" 
+                                        name="mat_no" 
+                                        placeholder="e.g. M.21/ND/CSC/23456"
+                                        required
+                                        autocomplete="off"
+                                        style="border-radius: 0 12px 12px 0 !important;"
+                                    >
+                                    <div class="invalid-feedback">
+                                        Please enter your Matriculation Number (e.g. M.21/HND/CSC/23456).
+                                    </div>
+                                </div>
+                            </div>
                             {% csrf_token %}
                             
                             <!-- Email Field -->
@@ -68,6 +90,20 @@
                                     </div>
                                 </div>
                             </div>
+
+                                <div class="mb-4">
+
+                                <label for="email" class="form-label fw-semibold text-dark">Department</label>
+
+                                <select name="department" id="department" class="form-control" style="border-radius: 5px; height: 60px;">
+                                    <option value="" disabled selected>-- Select Department --</option>
+                                    {% for dept in departments %}
+                                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                                    {% endfor %}
+                                </select>
+
+                                </div>
+
 
                             <!-- Password Field -->
                             <div class="mb-4">
